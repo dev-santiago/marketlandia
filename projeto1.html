@@ -753,17 +753,25 @@
     let searchQuery = '';
     let draftOrder = null;
 
-    const saveData = () => {
-      fetch('/api/db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(database)
-      });
+    // Salva no servidor do Render (/api/db) e mantém cópia de segurança local
+    const saveData = async () => {
+      try {
+        localStorage.setItem('marketlandia_db', JSON.stringify(database));
+      } catch (e) {}
+      try {
+        await fetch('/api/db', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(database)
+        });
+      } catch (e) {
+        console.warn('Servidor Render inacessível no momento, salvo localmente.');
+      }
     };
 
     const nextId = () => Math.random().toString(36).slice(2, 10);
     const nextSeqNumber = key => String(++database.seq[key]).padStart(4, '0');
-    const addAuditLog = action => database.audit.unshift({ t: Date.now(), u: currentUser.nome, a: action });
+    const addAuditLog = action => database.audit.unshift({ t: Date.now(), u: currentUser ? currentUser.nome : 'Sistema', a: action });
 
     const isAdmin = () => currentUser?.role === 'admin';
     const isManager = () => currentUser?.role !== 'vendedor';
@@ -904,22 +912,28 @@
     ];
 
     async function login() {
-      const passHash = await sha256(getVal('pw'));
-      const email = getVal('em').trim().toLowerCase();
-      const user = database.users.find(u => u.ativo && u.email === email && u.h === passHash);
+      const emailInput = getVal('em').trim().toLowerCase();
+      const passInput = getVal('pw');
+
+      if (!emailInput || !passInput) {
+        return showToast('Preencha seu e-mail e senha.');
+      }
+
+      const passHash = await sha256(passInput);
+      const user = database.users.find(u => u.ativo && u.email === emailInput && u.h === passHash);
       
-      if (!user) return showToast('E-mail ou senha inválidos');
+      if (!user) return showToast('E-mail ou senha inválidos.');
       
       currentUser = user;
       activePage = 'ped';
-      addAuditLog('Login');
-      saveData();
+      addAuditLog('Login realizado');
+      await saveData();
       renderApp();
     }
 
-    function logout() {
-      addAuditLog('Logout');
-      saveData();
+    async function logout() {
+      addAuditLog('Logout realizado');
+      await saveData();
       currentUser = null;
       renderApp();
     }
@@ -943,14 +957,14 @@
               </div>
               <h2 style="font-family:var(--font-serif);color:var(--pri);margin:0 0 18px;font-size:24px">Bem-vindo de volta</h2>
               <label>E-mail de acesso</label>
-              <input id="em" value="admin@erp.com">
+              <input id="em" type="email" placeholder="Digite seu e-mail">
               <label>Senha</label>
-              <input id="pw" type="password" value="admin123" onkeydown="if(event.key==='Enter')login()">
+              <input id="pw" type="password" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')login()">
               <br><br>
-              <button style="width:100%;padding:12px;font-size:14px" onclick="login()">ENTRAR NO SISTEMA</button>
-              <p class="mut" style="font-size:12px;margin-top:18px;margin-bottom:0;text-align:center">
-                Acesso padrão: <b>admin@erp.com</b> / <b>admin123</b>
-              </p>
+              <div style="display:flex;gap:10px">
+                <button style="flex:1;padding:12px;font-size:14px" onclick="login()">ENTRAR</button>
+                <button style="flex:1;padding:12px;font-size:14px" class="secondary" onclick="renderRegister()">CADASTRAR</button>
+              </div>
             </div>
           </div>`;
         return;
@@ -1009,6 +1023,69 @@
           </div>
         </div>`;
       refreshView();
+    }
+
+    function renderRegister() {
+      const container = getEl('app');
+      container.innerHTML = `
+        <div class="login-bg">
+          <div class="login-box form-layout">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div class="logo" style="color:#1f2124">Comercial<span>ERP</span></div>
+              <small class="mut" style="font-weight:700">NOVA CONTA</small>
+            </div>
+            <h2 style="font-family:var(--font-serif);color:var(--pri);margin:0 0 18px;font-size:24px">Crie seu acesso</h2>
+            <label>Nome completo</label>
+            <input id="reg_name" placeholder="Seu nome ou razão social">
+            <label>E-mail</label>
+            <input id="reg_email" type="email" placeholder="seu@email.com">
+            <label>Senha (mínimo 6 caracteres)</label>
+            <input id="reg_pw" type="password" placeholder="Crie uma senha segura" onkeydown="if(event.key==='Enter')registerUser()">
+            <br><br>
+            <div style="display:flex;gap:10px">
+              <button style="flex:1;padding:12px;font-size:14px" onclick="registerUser()">CRIAR CONTA</button>
+              <button style="flex:1;padding:12px;font-size:14px" class="secondary" onclick="renderApp()">VOLTAR</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    async function registerUser() {
+      const name = getVal('reg_name').trim();
+      const email = getVal('reg_email').trim().toLowerCase();
+      const password = getVal('reg_pw');
+
+      if (!name || !email.includes('@') || password.length < 6) {
+        return showToast('Informe nome, e-mail válido e senha com no mínimo 6 caracteres.');
+      }
+
+      if (database.users.some(u => u.email === email)) {
+        return showToast('Este e-mail já está cadastrado no banco de dados.');
+      }
+
+      const passHash = await sha256(password);
+      // Se não houver nenhum usuário no banco do Render ainda, o primeiro cadastrado vira Admin
+      const userRole = database.users.length === 0 ? 'admin' : 'vendedor';
+
+      database.users.push({
+        id: nextId(),
+        nome: name,
+        email: email,
+        h: passHash,
+        role: userRole,
+        pct: userRole === 'admin' ? 0 : 5,
+        ativo: 1
+      });
+
+      database.audit.unshift({
+        t: Date.now(),
+        u: name,
+        a: 'Novo usuário cadastrado: ' + email + ' (' + userRole + ')'
+      });
+
+      await saveData();
+      showToast('Cadastro realizado com sucesso! Faça seu login.');
+      renderApp();
     }
 
     function refreshView() {
@@ -1229,7 +1306,7 @@
           ${isManager() ? `
             <label>Vendedor responsável</label>
             <select id="cli_seller">
-              ${database.users.filter(u => u.role === 'vendedor' && u.ativo).map(u => `<option value="${u.id}">${escapeHtml(u.nome)}</option>`).join('')}
+              ${database.users.filter(u => (u.role === 'vendedor' || u.role === 'admin') && u.ativo).map(u => `<option value="${u.id}">${escapeHtml(u.nome)}</option>`).join('')}
             </select>` : ''}
           <br><br>
           <button onclick="saveClient()">Salvar Cliente</button>
@@ -1651,7 +1728,7 @@
       });
 
       addAuditLog(`Usuário ${email} criado`);
-      saveData();
+      await saveData();
       closeModal();
       refreshView();
     }
@@ -1681,19 +1758,25 @@
       refreshView();
     }
 
+    // Inicialização: busca os dados do servidor no Render (/api/db)
     (async () => {
       try {
         const res = await fetch('/api/db');
-        database = await res.json();
-      } catch (e) {}
+        if (res.ok) {
+          database = await res.json();
+        }
+      } catch (e) {
+        try {
+          const local = localStorage.getItem('marketlandia_db');
+          if (local) database = JSON.parse(local);
+        } catch (err) {}
+      }
 
-      if (!database || !database.users) {
+      // Se o banco no Render estiver vazio/novo, cria a estrutura limpa sem logins padrão
+      if (!database || !Array.isArray(database.users)) {
         database = {
           seq: { o: 100, p: 2180, f: 500 },
-          users: [
-            { id: 'u0', nome: 'Agnaldo', email: 'admin@erp.com', h: await sha256('admin123'), role: 'admin', pct: 0, ativo: 1 },
-            { id: 'u1', nome: 'Vendedor Padrão', email: 'vendas@erp.com', h: await sha256('123456'), role: 'vendedor', pct: 5, ativo: 1 }
-          ],
+          users: [],
           cli: [],
           prod: [],
           orc: [],
@@ -1704,7 +1787,7 @@
           audit: [],
           cfg: { liberaApos: 1, maxDesc: 10 }
         };
-        saveData();
+        await saveData();
       }
       renderApp();
     })();
