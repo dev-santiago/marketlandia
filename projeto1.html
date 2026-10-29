@@ -1,0 +1,1713 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MarketLandia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --fg: #2c3038;
+      --card: #ffffff;
+      --mut: #7b818c;
+      --bd: #e4e7ec;
+      --pri: #d91e36;
+      --pri-dark: #b31428;
+      --pri-light: #fbe9eb;
+      --ok: #2e9e49;
+      --warn: #e09f1f;
+      --bad: #d91e36;
+      --dark-bar: #1f2124;
+      --dark-hover: #2c2f33;
+      --filter-bg: #e2e4e8;
+      --font-sans: 'Raleway', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-serif: 'Playfair Display', Georgia, serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-rows: 58px 1fr;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      background: var(--dark-bar);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      gap: 20px;
+      border-bottom: 1px solid #141517;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+    }
+
+    .brand-area {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .logo {
+      font-family: var(--font-sans);
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .logo span {
+      background: var(--pri);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+
+    .top-pills {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pill-active {
+      background: var(--pri);
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(217, 30, 54, 0.35);
+    }
+
+    .pill-item {
+      color: #b0b5bd;
+      font-size: 12px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .pill-item:hover {
+      color: #fff;
+    }
+
+    .top-search {
+      flex: 1;
+      max-width: 520px;
+      position: relative;
+    }
+
+    .top-search input {
+      width: 100%;
+      background: #2d3035;
+      border: 1px solid #3c4047;
+      color: #fff;
+      border-radius: 20px;
+      padding: 8px 16px 8px 36px;
+      font-size: 13px;
+    }
+
+    .top-search input::placeholder {
+      color: #8c929c;
+    }
+
+    .top-search input:focus {
+      border-color: var(--pri);
+      background: #25282c;
+    }
+
+    .top-search::before {
+      content: "🔍";
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      opacity: 0.65;
+    }
+
+    .top-user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--pri);
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.03em;
+    }
+
+    .user-info {
+      line-height: 1.2;
+      text-align: left;
+    }
+
+    .user-info small {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #9aa0a9;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .user-info b {
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 225px 1fr;
+    }
+
+    nav {
+      background: var(--dark-bar);
+      color: #b8bdc6;
+      padding: 14px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-right: 1px solid #dfe2e7;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      color: #c4c9d1;
+      transition: all 0.15s ease;
+      user-select: none;
+      border-left: 3px solid transparent;
+    }
+
+    nav a span.lbl {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    nav a span.arr {
+      font-size: 11px;
+      opacity: 0.5;
+    }
+
+    nav a:hover {
+      background: var(--dark-hover);
+      color: #fff;
+    }
+
+    nav a.on {
+      background: var(--pri);
+      color: #fff;
+      font-weight: 700;
+      border-left-color: #fff;
+      border-radius: 0 22px 22px 0;
+      margin-right: 10px;
+      box-shadow: 0 4px 12px rgba(217, 30, 54, 0.35);
+    }
+
+    nav a.on span.arr {
+      opacity: 1;
+    }
+
+    .nav-footer {
+      padding: 14px 16px 4px;
+      border-top: 1px solid #2e3136;
+      margin-top: 16px;
+    }
+
+    .logout-btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #3e4249;
+      color: #e4e7ec;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .logout-btn:hover {
+      background: var(--pri);
+      border-color: var(--pri);
+      color: #fff;
+    }
+
+    main {
+      padding: 28px 36px;
+      min-width: 0;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .page-head {
+      border-bottom: 1px solid #d5d9e0;
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .page-head small {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--mut);
+      margin-bottom: 2px;
+    }
+
+    .page-head h2 {
+      font-family: var(--font-serif);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--pri);
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .help-circle {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid #9aa0a9;
+      color: #7b818c;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: help;
+    }
+
+    .action-panel {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 6px;
+      margin-bottom: 26px;
+      align-items: stretch;
+    }
+
+    .filter-box {
+      background: var(--filter-bg);
+      padding: 16px 20px;
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .filter-box label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #5a6069;
+      letter-spacing: 0.05em;
+    }
+
+    .filter-input-wrap {
+      background: #fff;
+      border-radius: 3px;
+      padding: 8px 14px;
+      border: 1px solid #d0d4dc;
+    }
+
+    .filter-input-wrap input {
+      border: none;
+      padding: 0;
+      width: 100%;
+      background: transparent;
+      font-size: 13px;
+      color: var(--fg);
+    }
+
+    .filter-input-wrap input:focus {
+      box-shadow: none;
+    }
+
+    .filter-tags {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tag-active {
+      background: var(--pri);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag-dashed {
+      border: 1px dashed var(--pri);
+      color: var(--pri);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: 54px 54px;
+      grid-template-rows: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      background: var(--filter-bg);
+      border: none;
+      color: var(--pri);
+      border-radius: 3px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .tool-btn:hover {
+      background: #d5d8de;
+    }
+
+    .add-big-btn {
+      background: var(--pri);
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      width: 135px;
+      padding: 16px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .add-big-btn:hover {
+      background: var(--pri-dark);
+    }
+
+    .add-big-btn small {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.92;
+    }
+
+    .add-big-btn b {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-top: 2px;
+    }
+
+    input, select, button {
+      font: inherit;
+      padding: 8px 12px;
+      border: 1px solid #cfd4dc;
+      border-radius: 4px;
+      background: #fff;
+      color: var(--fg);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--pri);
+      box-shadow: 0 0 0 3px rgba(217, 30, 54, 0.12);
+    }
+
+    button {
+      background: var(--pri);
+      color: #fff;
+      border: 0;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+    }
+
+    button:hover {
+      background: var(--pri-dark);
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--fg);
+      border: 1px solid #cfd4dc;
+    }
+
+    button.secondary:hover {
+      border-color: var(--pri);
+      color: var(--pri);
+      background: #fffafa;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+      gap: 14px;
+      margin-bottom: 26px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-left: 4px solid var(--pri);
+      border-radius: 4px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .card small {
+      color: var(--mut);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+    }
+
+    .card h3 {
+      font-family: var(--font-serif);
+      margin: 6px 0 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--fg);
+    }
+
+    .table-wrapper {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 4px;
+      overflow-x: auto;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--bd);
+      color: #4a5058;
+      font-weight: 800;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: #fafbfc;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--bd);
+      vertical-align: middle;
+      white-space: nowrap;
+      font-size: 13.5px;
+    }
+
+    tr:hover td {
+      background: #fcfcfd;
+    }
+
+    td:first-child {
+      border-left: 5px solid var(--pri);
+      font-weight: 700;
+    }
+
+    .num-serif {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--pri);
+      display: block;
+      line-height: 1.1;
+    }
+
+    .sub-status {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--mut);
+    }
+
+    .dot-ok, .dot-warn, .dot-bad {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .dot-ok { color: var(--ok); }
+    .dot-ok::after { content: "●"; font-size: 10px; }
+
+    .dot-warn { color: var(--warn); }
+    .dot-warn::after { content: "●"; font-size: 10px; }
+
+    .dot-bad { color: var(--bad); }
+    .dot-bad::after { content: "●"; font-size: 10px; }
+
+    .mut { color: var(--mut); }
+    .ok { color: var(--ok) !important; }
+    .bad { color: var(--bad) !important; }
+
+    label {
+      display: block;
+      margin: 10px 0 4px;
+      color: #555b66;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-layout input, .form-layout select {
+      width: 100%;
+    }
+
+    #modal-container {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 22, 26, 0.65);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow: auto;
+      padding: 36px 14px;
+      z-index: 100;
+    }
+
+    #modal-container > div {
+      background: var(--card);
+      border-top: 4px solid var(--pri);
+      border-radius: 6px;
+      padding: 24px 26px;
+      width: min(680px, 100%);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    #modal-container h3 {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      color: var(--pri);
+      margin: 0 0 14px;
+      border-bottom: 1px solid var(--bd);
+      padding-bottom: 10px;
+    }
+
+    #toast-notification {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--dark-bar);
+      border-left: 4px solid var(--pri);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-weight: 600;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      display: none;
+      max-width: 90%;
+      z-index: 200;
+    }
+
+    .login-bg {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #18191c 0%, #2b1115 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      background: #fff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 6px;
+      border-top: 5px solid var(--pri);
+      padding: 32px 28px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    @media (max-width: 860px) {
+      .workspace { grid-template-columns: 1fr; }
+      .top-pills { display: none; }
+      nav {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 6px 10px;
+      }
+      .nav-list { flex-direction: row; gap: 4px; }
+      nav a { white-space: nowrap; padding: 8px 12px; border-radius: 6px !important; margin: 0; }
+      nav a span.arr, .nav-footer { display: none; }
+      .action-panel { grid-template-columns: 1fr; }
+      .tool-grid { display: none; }
+      .add-big-btn { width: 100%; flex-direction: row; gap: 8px; padding: 12px; }
+      main { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="modal-container"></div>
+  <div id="toast-notification"></div>
+
+  <script>
+    const getEl = id => document.getElementById(id);
+    const getVal = id => getEl(id).value;
+    const formatCurrency = num => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num || 0);
+    const formatDate = date => new Date(date).toLocaleDateString('pt-BR');
+    const escapeHtml = str => String(str ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
+
+    const sha256 = async str => {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+    };
+
+    let database;
+    let currentUser = null;
+    let activePage = 'home';
+    let searchQuery = '';
+    let draftOrder = null;
+
+    const saveData = () => {
+      fetch('/api/db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(database)
+      });
+    };
+
+    const nextId = () => Math.random().toString(36).slice(2, 10);
+    const nextSeqNumber = key => String(++database.seq[key]).padStart(4, '0');
+    const addAuditLog = action => database.audit.unshift({ t: Date.now(), u: currentUser.nome, a: action });
+
+    const isAdmin = () => currentUser?.role === 'admin';
+    const isManager = () => currentUser?.role !== 'vendedor';
+    const filterByOwnership = list => isManager() ? list : list.filter(item => item.vend === currentUser.id);
+
+    const getEntityName = (collection, id) => {
+      const match = database[collection].find(entry => entry.id === id);
+      return escapeHtml(match?.nome || '—');
+    };
+
+    const sumCollection = (arr, fn) => arr.reduce((acc, item) => acc + fn(item), 0);
+    const calculateOrderTotal = order => sumCollection(order.itens, i => i.q * i.pu * (1 - i.d / 100)) + Number(order.frete || 0);
+
+    const showToast = message => {
+      const toast = getEl('toast-notification');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3200);
+    };
+
+    const openModal = htmlContent => {
+      getEl('modal-container').innerHTML = `<div>${htmlContent}</div>`;
+      getEl('modal-container').style.display = 'flex';
+    };
+
+    const closeModal = () => {
+      getEl('modal-container').style.display = 'none';
+    };
+
+    const renderCard = (title, value, cssClass = '') => `
+      <div class="card">
+        <small>${title}</small>
+        <h3 class="${cssClass}">${value}</h3>
+      </div>
+    `;
+
+    const renderHeader = (category, title, addCallback) => `
+      <div class="page-head">
+        <div>
+          <small>${category}</small>
+          <h2>${title}</h2>
+        </div>
+        <span class="help-circle" title="Módulo ${title}">?</span>
+      </div>
+      <div class="action-panel">
+        <div class="filter-box">
+          <label>Localizar por</label>
+          <div class="filter-input-wrap">
+            <input placeholder="Buscar termo nesta listagem…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
+          </div>
+          <div class="filter-tags">
+            <span class="tag-active">MÓDULO: ${title.toUpperCase()} ✕</span>
+            <span class="tag-dashed">FILTRO ATIVO</span>
+          </div>
+        </div>
+        <div class="tool-grid">
+          <button class="tool-btn" onclick="refreshView()" title="Atualizar lista">☰</button>
+          <button class="tool-btn" onclick="window.print()" title="Imprimir tela">🖨️</button>
+          <button class="tool-btn" onclick="saveData();showToast('Sincronizado com o banco de dados')" title="Sincronizar">⇅</button>
+          <button class="tool-btn" onclick="searchQuery='';refreshView()" title="Limpar busca">↺</button>
+        </div>
+        ${addCallback ? `
+          <button class="add-big-btn" onclick="${addCallback}">
+            <small>ADICIONAR</small>
+            <b>NOVO</b>
+          </button>` : `
+          <button class="add-big-btn" onclick="navigateTo('orc')">
+            <small>ATALHO</small>
+            <b>ORÇAR</b>
+          </button>`}
+      </div>
+    `;
+
+    const renderTable = (headers, rows, bypassFilter = false) => {
+      let filteredRows = rows;
+      if (!bypassFilter && searchQuery) {
+        filteredRows = rows.filter(cols => 
+          cols.join(' ')
+            .replace(/<option[^<]*<\/option>/g, '')
+            .replace(/<[^>]*>/g, ' ')
+            .toLowerCase()
+            .includes(searchQuery)
+        );
+      }
+      return `
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+              ${filteredRows.length > 0 
+                ? filteredRows.map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') 
+                : `<tr><td colspan="${headers.length}" class="mut">Nenhum registro encontrado.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    const isCpfValid = cpfStr => {
+      if (cpfStr.length !== 11 || /^(\d)\1+$/.test(cpfStr)) return false;
+      for (let t = 9; t < 11; t++) {
+        let sum = 0;
+        for (let c = 0; c < t; c++) sum += Number(cpfStr[c]) * (t + 1 - c);
+        if (Number(cpfStr[t]) !== ((sum * 10) % 11) % 10) return false;
+      }
+      return true;
+    };
+
+    const isCnpjValid = cnpjStr => {
+      if (cnpjStr.length !== 14 || /^(\d)\1+$/.test(cnpjStr)) return false;
+      for (let t = 12; t < 14; t++) {
+        let sum = 0, p = t - 7;
+        for (let i = 0; i < t; i++) {
+          sum += Number(cnpjStr[i]) * p--;
+          if (p < 2) p = 9;
+        }
+        const rest = sum % 11;
+        if (Number(cnpjStr[t]) !== (rest < 2 ? 0 : 11 - rest)) return false;
+      }
+      return true;
+    };
+
+    const STATUS_LIST = ['Rascunho', 'Enviado', 'Em negociação', 'Aprovado pelo cliente', 'Recusado', 'Expirado'];
+    
+    const APP_NAVIGATION = [
+      ['home', 'Início', '🏠', false],
+      ['prod', 'Catálogo', '➕', false],
+      ['orc', 'Orçamentos', '🏷️', false],
+      ['ped', 'Vendas / Pedidos', '🛒', false],
+      ['cli', 'Clientes', '👥', false],
+      ['fat', 'Notas / Faturas', '📄', false],
+      ['rec', 'Financeiro', '💲', false],
+      ['com', 'Comissões', '📊', false],
+      ['usr', 'Usuários', '👤', true],
+      ['cfg', 'Ajustes', '⚙️', true]
+    ];
+
+    async function login() {
+      const passHash = await sha256(getVal('pw'));
+      const email = getVal('em').trim().toLowerCase();
+      const user = database.users.find(u => u.ativo && u.email === email && u.h === passHash);
+      
+      if (!user) return showToast('E-mail ou senha inválidos');
+      
+      currentUser = user;
+      activePage = 'ped';
+      addAuditLog('Login');
+      saveData();
+      renderApp();
+    }
+
+    function logout() {
+      addAuditLog('Logout');
+      saveData();
+      currentUser = null;
+      renderApp();
+    }
+
+    function navigateTo(pageKey) {
+      activePage = pageKey;
+      searchQuery = '';
+      renderApp();
+    }
+
+    function renderApp() {
+      const container = getEl('app');
+      
+      if (!currentUser) {
+        container.innerHTML = `
+          <div class="login-bg">
+            <div class="login-box form-layout">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <div class="logo" style="color:#1f2124">Comercial<span>ERP</span></div>
+                <small class="mut" style="font-weight:700">ACESSO</small>
+              </div>
+              <h2 style="font-family:var(--font-serif);color:var(--pri);margin:0 0 18px;font-size:24px">Bem-vindo de volta</h2>
+              <label>E-mail de acesso</label>
+              <input id="em" value="admin@erp.com">
+              <label>Senha</label>
+              <input id="pw" type="password" value="admin123" onkeydown="if(event.key==='Enter')login()">
+              <br><br>
+              <button style="width:100%;padding:12px;font-size:14px" onclick="login()">ENTRAR NO SISTEMA</button>
+              <p class="mut" style="font-size:12px;margin-top:18px;margin-bottom:0;text-align:center">
+                Acesso padrão: <b>admin@erp.com</b> / <b>admin123</b>
+              </p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const activeNavItem = APP_NAVIGATION.find(item => item[0] === activePage);
+      if (!PAGES[activePage] || (activeNavItem?.[3] && !isAdmin())) {
+        activePage = 'home';
+      }
+
+      const initials = currentUser.nome
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase();
+
+      container.innerHTML = `
+        <div class="shell">
+          <header class="topbar">
+            <div class="brand-area">
+              <a class="logo" onclick="navigateTo('home')">Market<span>Landia</span></a>
+              <div class="top-pills">
+                <span class="pill-active">⚡ ERP</span>
+                <span class="pill-item" onclick="navigateTo('rec')">💲 Financeiro</span>
+                <span class="pill-item" onclick="navigateTo('ped')">🖥️ PDV / Vendas</span>
+                <span class="pill-item" onclick="navigateTo('prod')">📦 Catálogo</span>
+              </div>
+            </div>
+            <div class="top-search">
+              <input placeholder="Procure por cliente, pedido, SKU ou status…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
+            </div>
+            <div class="top-user">
+              <div class="avatar">${escapeHtml(initials)}</div>
+              <div class="user-info">
+                <small>${escapeHtml(currentUser.role)}</small>
+                <b>${escapeHtml(currentUser.nome)}</b>
+              </div>
+            </div>
+          </header>
+
+          <div class="workspace">
+            <nav>
+              <div class="nav-list">
+                ${APP_NAVIGATION.filter(nav => !nav[3] || isAdmin()).map(nav => `
+                  <a id="nav_${nav[0]}" onclick="navigateTo('${nav[0]}')">
+                    <span class="lbl"><span>${nav[2]}</span> ${nav[1]}</span>
+                    <span class="arr">❯</span>
+                  </a>`).join('')}
+              </div>
+              <div class="nav-footer">
+                <button class="logout-btn" onclick="logout()">🚪 Sair do Sistema</button>
+              </div>
+            </nav>
+            <main id="main-content"></main>
+          </div>
+        </div>`;
+      refreshView();
+    }
+
+    function refreshView() {
+      document.querySelectorAll('nav a').forEach(a => {
+        a.classList.toggle('on', a.id === `nav_${activePage}`);
+      });
+      getEl('main-content').innerHTML = PAGES[activePage]();
+    }
+
+    const PAGES = {
+      home() {
+        const orders = filterByOwnership(database.ped);
+        const quotes = filterByOwnership(database.orc);
+        const receivables = filterByOwnership(database.rec);
+        const pendingOrders = orders.filter(p => p.st !== 'Faturado');
+
+        const commissionEstimate = sumCollection(pendingOrders, order => {
+          const seller = database.users.find(u => u.id === order.vend);
+          const commissionRate = seller ? seller.pct : 0;
+          return sumCollection(order.itens, item => (item.q - item.fat) * item.pu * (1 - item.d / 100)) * commissionRate / 100;
+        });
+
+        const sellerRanking = database.users
+          .filter(u => u.role === 'vendedor')
+          .map(u => [u.nome, sumCollection(database.ped.filter(p => p.vend === u.id), calculateOrderTotal)])
+          .sort((a, b) => b[1] - a[1]);
+
+        return renderHeader('PAINEL GERENCIAL', 'INÍCIO', 'openQuoteForm()') + `
+          <div class="cards">
+            ${renderCard('Pedidos (valor total)', formatCurrency(sumCollection(orders, calculateOrderTotal)))}
+            ${renderCard('Orçamentos em aberto', quotes.filter(x => STATUS_LIST.slice(0, 3).includes(x.st)).length)}
+            ${renderCard('Conversão de orçamentos', (quotes.length ? Math.round(quotes.filter(x => x.ped).length / quotes.length * 100) : 0) + '%')}
+            ${renderCard('Faturado', formatCurrency(sumCollection(filterByOwnership(database.fat), x => x.total)))}
+            ${renderCard('Recebido', formatCurrency(sumCollection(receivables, x => x.pago)), 'ok')}
+            ${renderCard('A receber', formatCurrency(sumCollection(receivables, x => x.valor - x.pago)))}
+            ${renderCard('Pedidos aguardando faturamento', pendingOrders.length)}
+            ${renderCard('Comissão prevista', formatCurrency(commissionEstimate))}
+            ${renderCard('Comissões a pagar', formatCurrency(sumCollection(filterByOwnership(database.com).filter(x => x.st !== 'Paga'), x => x.valor)))}
+          </div>` + 
+          (isManager() ? '<h3 style="font-family:var(--font-serif);font-size:20px;color:var(--pri)">Ranking de Vendedores</h3>' + 
+            renderTable(['Vendedor', 'Total em Pedidos'], sellerRanking.map(row => [escapeHtml(row[0]), `<b>${formatCurrency(row[1])}</b>`]), true) : '');
+      },
+
+      cli() {
+        return renderHeader('CADASTROS', 'CLIENTES', 'openClientForm()') +
+          renderTable(['CLIENTE', 'DOCUMENTO', 'CONTATO', 'CIDADE / UF', 'VENDEDOR', 'STATUS'],
+            filterByOwnership(database.cli).map(c => [
+              `<b>${escapeHtml(c.nome.toUpperCase())}</b>`,
+              escapeHtml(c.doc),
+              escapeHtml(`${c.email} · ${c.tel}`),
+              escapeHtml(`${c.cid}/${c.uf}`),
+              getEntityName('users', c.vend),
+              c.ativo ? '<span class="dot-ok">ATIVO</span>' : '<span class="dot-bad">INATIVO</span>'
+            ]));
+      },
+
+      prod() {
+        return renderHeader('CATÁLOGO', 'PRODUTOS E SERVIÇOS', isManager() ? 'openProductForm()' : '') +
+          renderTable(['SKU', 'DESCRIÇÃO DO ITEM', 'UN.', 'CUSTO', 'PREÇO DE VENDA', 'MARGEM', 'ESTOQUE'],
+            database.prod.map(p => [
+              `<span class="num-serif" style="font-size:15px">${escapeHtml(p.sku)}</span>`,
+              `<b>${escapeHtml(p.nome.toUpperCase())}</b>`,
+              escapeHtml(p.un),
+              isManager() ? formatCurrency(p.custo) : '—',
+              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
+              isManager() ? Math.round((p.preco - p.custo) / p.preco * 100) + '%' : '—',
+              p.est == null ? '<span class="mut">SERVIÇO</span>' : p.est > 0 ? `<span class="dot-ok">${p.est} UN</span>` : `<span class="dot-bad">${p.est} UN</span>`
+            ]));
+      },
+
+      orc() {
+        return renderHeader('VENDAS', 'ORÇAMENTOS', 'openQuoteForm()') +
+          renderTable(['ORÇAMENTO', 'DATA', 'CLIENTE', 'VENDEDOR', 'VALOR', 'STATUS', 'AÇÃO'],
+            filterByOwnership(database.orc).slice().reverse().map(o => [
+              `<span class="num-serif">${o.n}</span><span class="sub-status">${escapeHtml(o.st)}</span>`,
+              formatDate(o.data),
+              `<b>${getEntityName('cli', o.cli).toUpperCase()}</b>`,
+              getEntityName('users', o.vend),
+              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(calculateOrderTotal(o))}</b>`,
+              o.ped ? '<span class="dot-ok">CONVERTIDO</span>' : `<select onchange="updateQuoteStatus('${o.id}', this.value)">${STATUS_LIST.map(s => `<option${s === o.st ? ' selected' : ''}>${s}</option>`).join('')}</select>`,
+              o.st === 'Aprovado pelo cliente' && !o.ped ? `<button onclick="convertToOrder('${o.id}')">Converter em pedido</button>` : o.ped ? `Pedido #${escapeHtml((database.ped.find(p => p.id === o.ped) || {}).n)}` : '✏️'
+            ]));
+      },
+
+      ped() {
+        return renderHeader('VENDAS', 'PEDIDO', 'openQuoteForm()') +
+          renderTable(['PEDIDO', 'DATAS', 'CLIENTE', 'ENTREGA / PARC.', 'VALOR', 'AÇÃO'],
+            filterByOwnership(database.ped).slice().reverse().map(p => {
+              const done = p.st === 'Faturado';
+              return [
+                `<span class="num-serif">${p.n}</span><span class="sub-status" style="color:${done ? 'var(--ok)' : 'var(--warn)'}">${done ? 'CONCLUÍDO' : escapeHtml(p.st).toUpperCase()}</span>`,
+                `<small class="mut">EMITIDO EM: <b>${formatDate(p.data)}</b><br>ORÇAMENTO: <b>#${escapeHtml((database.orc.find(o => o.id === p.orc) || {}).n)}</b></small>`,
+                `<b>${getEntityName('cli', p.cli).toUpperCase()}</b><br><small class="mut">Vendedor: ${getEntityName('users', p.vend)}</small>`,
+                `<b>${formatDate(p.data)}</b><br><span class="${done ? 'dot-ok' : 'dot-warn'}">${done ? 'ENTREGUE' : 'SEPARAÇÃO'}</span>`,
+                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(calculateOrderTotal(p))}</b><br><span class="${done ? 'dot-ok' : 'dot-warn'}">${done ? 'FATURADO' : 'PENDENTE'}</span>`,
+                `<button class="secondary" onclick="openOrderDetails('${p.id}')" title="Abrir e Faturar Pedido">✏️ Abrir</button>`
+              ];
+            }));
+      },
+
+      fat() {
+        return renderHeader('FISCAL E COMERCIAL', 'FATURAMENTO', '') +
+          renderTable(['FATURA', 'EMISSÃO', 'PEDIDO ORIGEM', 'CLIENTE', 'LÍQUIDO ITENS', 'VALOR TOTAL', 'STATUS FISCAL'],
+            filterByOwnership(database.fat).slice().reverse().map(f => [
+              `<span class="num-serif">${f.n}</span><span class="sub-status">FATURADO</span>`,
+              formatDate(f.data),
+              `#${escapeHtml((database.ped.find(p => p.id === f.ped) || {}).n)}`,
+              `<b>${getEntityName('cli', f.cli).toUpperCase()}</b>`,
+              formatCurrency(f.liq),
+              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(f.total)}</b>`,
+              '<span class="dot-warn">USO INTERNO</span>'
+            ]));
+      },
+
+      rec() {
+        const receivables = filterByOwnership(database.rec);
+        const currentTime = Date.now();
+        const isPending = x => (x.valor - x.pago) > 0.004;
+
+        return renderHeader('FINANCEIRO', 'CONTAS A RECEBER', '') + `
+          <div class="cards">
+            ${renderCard('Em aberto', formatCurrency(sumCollection(receivables, x => x.valor - x.pago)))}
+            ${renderCard('Recebido', formatCurrency(sumCollection(receivables, x => x.pago)), 'ok')}
+            ${renderCard('Vencido', formatCurrency(sumCollection(receivables.filter(x => x.venc < currentTime), x => x.valor - x.pago)), 'bad')}
+          </div>` +
+          renderTable(['FATURA', 'CLIENTE', 'PARCELA', 'VENCIMENTO', 'VALOR', 'RECEBIDO', 'SALDO', 'BAIXA'],
+            receivables.map(x => [
+              `<span class="num-serif">${x.n}</span>`,
+              `<b>${getEntityName('cli', x.cli).toUpperCase()}</b>`,
+              x.parc,
+              formatDate(x.venc) + (isPending(x) && x.venc < currentTime ? '<br><span class="dot-bad">ATRASADO</span>' : ''),
+              formatCurrency(x.valor),
+              formatCurrency(x.pago),
+              `<b>${formatCurrency(x.valor - x.pago)}</b>`,
+              !isPending(x) ? '<span class="dot-ok">PAGO</span>' : isManager() ? `<div style="display:flex;gap:6px"><input id="receipt_${x.id}" type="number" step="0.01" value="${(x.valor - x.pago).toFixed(2)}" style="width:100px"> <button onclick="settleReceipt('${x.id}')">Receber</button></div>` : '<span class="dot-warn">PENDENTE</span>'
+            ]));
+      },
+
+      com() {
+        const commissions = filterByOwnership(database.com);
+        const sumStatus = status => formatCurrency(sumCollection(commissions.filter(x => x.st === status), x => x.valor));
+
+        return renderHeader('FINANCEIRO', 'COMISSÕES', '') + `
+          <div class="cards">
+            ${renderCard('Apuradas', sumStatus('Apurada'))}
+            ${renderCard('Liberadas', sumStatus('Liberada'))}
+            ${renderCard('Pagas', sumStatus('Paga'), 'ok')}
+          </div>` +
+          renderTable(['FATURA', 'PEDIDO', 'CLIENTE', 'VENDEDOR', 'BASE LÍQUIDA', '%', 'COMISSÃO', 'STATUS', 'AÇÃO'],
+            commissions.map(x => [
+              `<span class="num-serif">${x.n}</span>`,
+              `#${x.ped}`,
+              `<b>${getEntityName('cli', x.cli).toUpperCase()}</b>`,
+              getEntityName('users', x.vend),
+              formatCurrency(x.base),
+              `${x.pct}%`,
+              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(x.valor)}</b>`,
+              x.st === 'Paga' ? '<span class="dot-ok">PAGA</span>' : `<span class="dot-warn">${x.st.toUpperCase()}</span>`,
+              isAdmin() && x.st === 'Liberada' ? `<button onclick="payCommission('${x.id}')">Pagar</button>` : ''
+            ]));
+      },
+
+      usr() {
+        return renderHeader('SISTEMA', 'VENDEDORES E USUÁRIOS', 'openUserForm()') +
+          renderTable(['NOME', 'E-MAIL', 'PERFIL', 'COMISSÃO %', 'STATUS / AÇÃO'],
+            database.users.map(u => [
+              `<b>${escapeHtml(u.nome.toUpperCase())}</b>`,
+              escapeHtml(u.email),
+              u.role.toUpperCase(),
+              u.role === 'vendedor' ? `<input type="number" step="0.1" min="0" max="100" value="${u.pct}" style="width:80px" onchange="updateUserCommission('${u.id}', this.value)">` : '—',
+              u.id === currentUser.id ? '<span class="dot-ok">ATIVO</span>' : `<button class="secondary" onclick="toggleUserStatus('${u.id}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>`
+            ]));
+      },
+
+      cfg() {
+        return renderHeader('SISTEMA', 'AJUSTES E AUDITORIA', '') + `
+          <div class="card form-layout" style="max-width:560px;margin-bottom:24px">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;color:var(--fg)">
+              <input type="checkbox" style="width:18px;height:18px;accent-color:var(--pri)" ${database.cfg.liberaApos ? 'checked' : ''} onchange="database.cfg.liberaApos=this.checked;evaluateCommissions();saveData();refreshView()">
+              Liberar comissão somente após o recebimento integral do faturamento
+            </label>
+            <label style="margin-top:14px">Desconto máximo permitido ao vendedor (%)</label>
+            <input type="number" value="${database.cfg.maxDesc}" onchange="database.cfg.maxDesc=Number(this.value);saveData()" style="max-width:140px">
+            <p class="mut" style="margin-bottom:0;font-size:12px;margin-top:12px">
+              Base da comissão: valor líquido dos itens faturados, sem frete.
+            </p>
+          </div>` +
+          renderTable(['DATA E HORA', 'USUÁRIO', 'AÇÃO REGISTRADA'], 
+            database.audit.slice(0, 100).map(log => [new Date(log.t).toLocaleString('pt-BR'), `<b>${escapeHtml(log.u)}</b>`, escapeHtml(log.a)]));
+      }
+    };
+
+    function openClientForm() {
+      openModal(`
+        <h3>Adicionar Novo Cliente</h3>
+        <div class="form-layout">
+          <label>Tipo de Pessoa</label>
+          <select id="cli_type">
+            <option value="J">Pessoa Jurídica (CNPJ)</option>
+            <option value="F">Pessoa Física (CPF)</option>
+          </select>
+          <label>Razão Social ou Nome Completo</label>
+          <input id="cli_name">
+          <label>CNPJ ou CPF</label>
+          <input id="cli_doc">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>E-mail</label><input id="cli_email" type="email"></div>
+            <div><label>Telefone / WhatsApp</label><input id="cli_phone"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px">
+            <div><label>CEP</label><input id="cli_zip"></div>
+            <div><label>Logradouro e número</label><input id="cli_address"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
+            <div><label>Cidade</label><input id="cli_city"></div>
+            <div><label>UF</label><input id="cli_state" maxlength="2"></div>
+          </div>
+          ${isManager() ? `
+            <label>Vendedor responsável</label>
+            <select id="cli_seller">
+              ${database.users.filter(u => u.role === 'vendedor' && u.ativo).map(u => `<option value="${u.id}">${escapeHtml(u.nome)}</option>`).join('')}
+            </select>` : ''}
+          <br><br>
+          <button onclick="saveClient()">Salvar Cliente</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>`);
+    }
+
+    function saveClient() {
+      const isCompany = getVal('cli_type') === 'J';
+      const cleanDoc = getVal('cli_doc').replace(/\D/g, '');
+      const clientName = getVal('cli_name').trim();
+      const assignedSeller = isManager() ? getVal('cli_seller') : currentUser.id;
+
+      if (!clientName) return showToast('Informe o nome ou a razão social');
+      if (!(isCompany ? isCnpjValid(cleanDoc) : isCpfValid(cleanDoc))) return showToast((isCompany ? 'CNPJ' : 'CPF') + ' inválido');
+      if (database.cli.some(c => c.doc.replace(/\D/g, '') === cleanDoc)) return showToast('Já existe cliente com este documento');
+      if (!assignedSeller) return showToast('Cadastre um vendedor antes de criar clientes');
+
+      database.cli.push({
+        id: nextId(),
+        tipo: getVal('cli_type'),
+        nome: clientName,
+        doc: getVal('cli_doc'),
+        email: getVal('cli_email'),
+        tel: getVal('cli_phone'),
+        cep: getVal('cli_zip'),
+        log: getVal('cli_address'),
+        cid: getVal('cli_city'),
+        uf: getVal('cli_state').toUpperCase(),
+        vend: assignedSeller,
+        ativo: 1
+      });
+
+      addAuditLog(`Cliente ${clientName} criado`);
+      saveData();
+      closeModal();
+      refreshView();
+    }
+
+    function openProductForm() {
+      openModal(`
+        <h3>Novo Produto ou Serviço</h3>
+        <div class="form-layout">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>SKU / Código</label><input id="prod_sku"></div>
+            <div><label>Unidade</label><input id="prod_unit" value="UN"></div>
+          </div>
+          <label>Nome / Descrição</label>
+          <input id="prod_name">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Preço de Custo (R$)</label><input id="prod_cost" type="number" step="0.01"></div>
+            <div><label>Preço de Venda (R$)</label><input id="prod_price" type="number" step="0.01"></div>
+          </div>
+          <label>Estoque Inicial (vazio para serviços)</label>
+          <input id="prod_stock" type="number">
+          <br><br>
+          <button onclick="saveProduct()">Salvar Item</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>`);
+    }
+
+    function saveProduct() {
+      if (!isManager()) return;
+      const salePrice = Number(getVal('prod_price'));
+      const sku = getVal('prod_sku').trim();
+      const name = getVal('prod_name').trim();
+      const stockInput = getVal('prod_stock');
+
+      if (!sku || !name || !(salePrice > 0)) return showToast('Informe SKU, nome e preço de venda');
+      if (database.prod.some(p => p.sku === sku)) return showToast('Este SKU já existe');
+
+      database.prod.push({
+        id: nextId(),
+        sku,
+        nome: name,
+        un: getVal('prod_unit'),
+        custo: Number(getVal('prod_cost')) || 0,
+        preco: salePrice,
+        est: stockInput === '' ? null : Number(stockInput)
+      });
+
+      addAuditLog(`Produto ${sku} criado`);
+      saveData();
+      closeModal();
+      refreshView();
+    }
+
+    function openQuoteForm() {
+      draftOrder = { itens: [], cli: '', frete: 0, parc: 1 };
+      renderQuoteModal();
+    }
+
+    function syncDraftValues() {
+      draftOrder.cli = getVal('quote_cli');
+      draftOrder.frete = Number(getVal('quote_freight')) || 0;
+      draftOrder.parc = Number(getVal('quote_installments')) || 1;
+    }
+
+    function renderQuoteModal() {
+      const availableClients = filterByOwnership(database.cli).filter(c => c.ativo);
+      openModal(`
+        <h3>Novo Orçamento de Venda</h3>
+        <div class="form-layout">
+          <label>Cliente</label>
+          <select id="quote_cli">
+            ${availableClients.map(c => `<option value="${c.id}" ${c.id === draftOrder.cli ? 'selected' : ''}>${escapeHtml(c.nome)}</option>`).join('')}
+          </select>
+          <label>Produto ou Serviço</label>
+          <select id="quote_item">
+            ${database.prod.map(p => `<option value="${p.id}">${escapeHtml(p.nome)} — ${formatCurrency(p.preco)}</option>`).join('')}
+          </select>
+          <div style="display:flex;gap:8px;align-items:end;margin:10px 0 14px">
+            <div><label style="margin:0">Qtd</label><input id="quote_qty" type="number" value="1" min="1" style="width:90px"></div>
+            <div><label style="margin:0">Desc. %</label><input id="quote_discount" type="number" value="0" min="0" style="width:90px"></div>
+            <button onclick="addQuoteItem()">+ Adicionar item</button>
+          </div>
+          ${renderTable(['Item', 'Qtd', 'Preço', 'Desc.', 'Subtotal'], draftOrder.itens.map(i => [
+            getEntityName('prod', i.p),
+            i.q,
+            formatCurrency(i.pu),
+            `${i.d}%`,
+            formatCurrency(i.q * i.pu * (1 - i.d / 100))
+          ]), true)}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div><label>Frete e despesas (R$)</label><input id="quote_freight" type="number" step="0.01" value="${draftOrder.frete}" oninput="syncDraftValues();getEl('quote_total_display').textContent=formatCurrency(calculateOrderTotal(draftOrder))"></div>
+            <div><label>Parcelas</label><select id="quote_installments">${[1, 2, 3, 4, 5, 6].map(n => `<option ${n === draftOrder.parc ? 'selected' : ''}>${n}x</option>`).join('')}</select></div>
+          </div>
+          <p style="font-size:17px">Total: <b id="quote_total_display" style="font-family:var(--font-serif);color:var(--pri);font-size:22px">${formatCurrency(calculateOrderTotal(draftOrder))}</b></p>
+          <button onclick="saveQuote()">Salvar Orçamento</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>`);
+    }
+
+    function addQuoteItem() {
+      syncDraftValues();
+      const product = database.prod.find(x => x.id === getVal('quote_item'));
+      const quantity = Number(getVal('quote_qty'));
+      const discount = Number(getVal('quote_discount'));
+
+      if (!product || !(quantity > 0) || discount < 0 || discount > 100) {
+        return showToast('Escolha um item, quantidade maior que zero e desconto entre 0 e 100%');
+      }
+      if (currentUser.role === 'vendedor' && discount > database.cfg.maxDesc) {
+        return showToast(`Desconto acima de ${database.cfg.maxDesc}% exige aprovação do administrador`);
+      }
+
+      draftOrder.itens.push({ p: product.id, q: quantity, pu: product.preco, d: discount });
+      renderQuoteModal();
+    }
+
+    function saveQuote() {
+      syncDraftValues();
+      const client = database.cli.find(x => x.id === draftOrder.cli);
+      if (!client || !draftOrder.itens.length) return showToast('Escolha o cliente e adicione ao menos um item');
+
+      const quote = {
+        id: nextId(),
+        n: nextSeqNumber('o'),
+        cli: client.id,
+        vend: currentUser.role === 'vendedor' ? currentUser.id : client.vend,
+        data: Date.now(),
+        itens: draftOrder.itens,
+        frete: draftOrder.frete,
+        parc: draftOrder.parc,
+        st: 'Rascunho',
+        ped: null,
+        hist: [[Date.now(), currentUser.nome, 'Criado']]
+      };
+
+      database.orc.push(quote);
+      addAuditLog(`Orçamento ${quote.n} criado`);
+      saveData();
+      closeModal();
+      refreshView();
+    }
+
+    function updateQuoteStatus(id, newStatus) {
+      const quote = database.orc.find(x => x.id === id);
+      if (!quote || quote.ped || (!isManager() && quote.vend !== currentUser.id)) return;
+      quote.st = newStatus;
+      quote.hist.push([Date.now(), currentUser.nome, `Status: ${newStatus}`]);
+      addAuditLog(`Orçamento ${quote.n}: ${newStatus}`);
+      saveData();
+      refreshView();
+    }
+
+    function convertToOrder(quoteId) {
+      const quote = database.orc.find(x => x.id === quoteId);
+      if (!quote || quote.ped || quote.st !== 'Aprovado pelo cliente' || (!isManager() && quote.vend !== currentUser.id)) return;
+
+      const order = {
+        id: nextId(),
+        n: nextSeqNumber('p'),
+        orc: quote.id,
+        cli: quote.cli,
+        vend: quote.vend,
+        data: Date.now(),
+        itens: quote.itens.map(i => ({ ...i, fat: 0 })),
+        frete: quote.frete,
+        parc: quote.parc,
+        st: 'Aprovado',
+        hist: [[Date.now(), currentUser.nome, `Criado a partir do orçamento ${quote.n}`]]
+      };
+
+      database.ped.push(order);
+      quote.ped = order.id;
+      quote.st = 'Convertido em pedido';
+      quote.hist.push([Date.now(), currentUser.nome, `Convertido no pedido ${order.n}`]);
+      
+      addAuditLog(`Orçamento ${quote.n} convertido no pedido ${order.n}`);
+      saveData();
+      refreshView();
+      showToast(`Pedido ${order.n} gerado!`);
+    }
+
+    function openOrderDetails(orderId) {
+      const order = database.ped.find(x => x.id === orderId);
+      if (!order) return;
+      const canInvoice = isManager() && order.st !== 'Faturado';
+
+      openModal(`
+        <h3>Pedido #${order.n} — ${escapeHtml(order.st)}</h3>
+        <p class="mut">${getEntityName('cli', order.cli)} · Vendedor: ${getEntityName('users', order.vend)} · Frete: ${formatCurrency(order.frete)} · ${order.parc}x</p>
+        ${renderTable(['Item', 'Qtd', 'Faturado', 'Saldo', 'Faturar agora'], order.itens.map((item, index) => {
+          const balance = item.q - item.fat;
+          return [
+            getEntityName('prod', item.p),
+            item.q,
+            item.fat,
+            balance,
+            canInvoice && balance > 0 ? `<input id="invoice_qty_${index}" type="number" min="0" max="${balance}" value="${balance}" style="width:80px">` : '—'
+          ];
+        }), true)}
+        <p style="font-size:17px">Total: <b style="font-family:var(--font-serif);color:var(--pri);font-size:22px">${formatCurrency(calculateOrderTotal(order))}</b></p>
+        <p class="mut" style="font-size:12px">Histórico: ${order.hist.map(h => `${formatDate(h[0])} ${escapeHtml(h[2])}`).join(' · ')}</p>
+        ${canInvoice ? `<button onclick="processInvoice('${order.id}')">Faturar Agora</button> ` : ''}
+        <button class="secondary" onclick="closeModal()">Fechar</button>`);
+    }
+
+    function processInvoice(orderId) {
+      const order = database.ped.find(x => x.id === orderId);
+      if (!isManager() || !order || !['Aprovado', 'Parcialmente faturado'].includes(order.st)) return;
+
+      const quantities = order.itens.map((item, index) => {
+        const input = getEl(`invoice_qty_${index}`);
+        return input ? Number(input.value) || 0 : 0;
+      });
+
+      const hasInvalidQuantities = quantities.some((qty, i) => qty < 0 || qty > (order.itens[i].q - order.itens[i].fat));
+      if (hasInvalidQuantities || !quantities.some(q => q > 0)) {
+        return showToast('Informe quantidades maiores que zero e dentro do saldo do pedido');
+      }
+
+      let netAmount = 0;
+      order.itens.forEach((item, index) => {
+        const invoiceQty = quantities[index];
+        item.fat += invoiceQty;
+        netAmount += invoiceQty * item.pu * (1 - item.d / 100);
+        
+        const catalogItem = database.prod.find(x => x.id === item.p);
+        if (catalogItem && catalogItem.est != null) {
+          catalogItem.est -= invoiceQty;
+        }
+      });
+      netAmount = Math.round(netAmount * 100) / 100;
+
+      const isFirstInvoice = !database.fat.some(x => x.ped === order.id);
+      const freightCost = isFirstInvoice ? Number(order.frete || 0) : 0;
+      const invoiceTotal = Math.round((netAmount + freightCost) * 100) / 100;
+
+      const invoice = {
+        id: nextId(),
+        n: nextSeqNumber('f'),
+        ped: order.id,
+        cli: order.cli,
+        vend: order.vend,
+        data: Date.now(),
+        liq: netAmount,
+        total: invoiceTotal
+      };
+      database.fat.push(invoice);
+
+      order.st = order.itens.every(i => i.fat >= i.q) ? 'Faturado' : 'Parcialmente faturado';
+      order.hist.push([Date.now(), currentUser.nome, `Faturamento ${invoice.n}`]);
+
+      const installmentsCount = order.parc || 1;
+      const baseInstallmentValue = Math.round((invoice.total / installmentsCount) * 100) / 100;
+      let installmentSum = 0;
+
+      for (let k = 1; k <= installmentsCount; k++) {
+        const value = k < installmentsCount ? baseInstallmentValue : Math.round((invoice.total - installmentSum) * 100) / 100;
+        installmentSum += value;
+        database.rec.push({
+          id: nextId(),
+          fat: invoice.id,
+          n: invoice.n,
+          cli: order.cli,
+          vend: order.vend,
+          parc: `${k}/${installmentsCount}`,
+          venc: Date.now() + 2592000000 * k,
+          valor: value,
+          pago: 0
+        });
+      }
+
+      const seller = database.users.find(x => x.id === order.vend);
+      const commissionRate = seller ? seller.pct : 0;
+      
+      if (!database.com.some(c => c.fat === invoice.id)) {
+        database.com.push({
+          id: nextId(),
+          fat: invoice.id,
+          n: invoice.n,
+          ped: order.n,
+          cli: order.cli,
+          vend: order.vend,
+          base: netAmount,
+          pct: commissionRate,
+          valor: Math.round(netAmount * commissionRate) / 100,
+          st: 'Apurada'
+        });
+      }
+
+      evaluateCommissions();
+      addAuditLog(`Faturamento ${invoice.n} do pedido ${order.n}`);
+      saveData();
+      closeModal();
+      refreshView();
+      showToast(`Faturamento ${invoice.n} registrado!`);
+    }
+
+    function evaluateCommissions() {
+      database.com.forEach(entry => {
+        if (entry.st !== 'Apurada') return;
+        const relatedReceipts = database.rec.filter(x => x.fat === entry.fat);
+        const isFullyPaid = relatedReceipts.every(x => (x.valor - x.pago) < 0.005);
+        
+        if (!database.cfg.liberaApos || isFullyPaid) {
+          entry.st = 'Liberada';
+        }
+      });
+    }
+
+    function settleReceipt(receiptId) {
+      if (!isManager()) return;
+      const receipt = database.rec.find(x => x.id === receiptId);
+      const paymentAmount = Math.round(Number(getVal(`receipt_${receiptId}`)) * 100) / 100;
+
+      if (!receipt || !(paymentAmount > 0) || paymentAmount > (receipt.valor - receipt.pago + 0.005)) {
+        return showToast('Informe um valor maior que zero e até o saldo da parcela');
+      }
+
+      receipt.pago = Math.round((receipt.pago + paymentAmount) * 100) / 100;
+      evaluateCommissions();
+      addAuditLog(`Recebimento de ${formatCurrency(paymentAmount)} na fatura ${receipt.n}`);
+      saveData();
+      refreshView();
+      showToast('Recebimento registrado!');
+    }
+
+    function payCommission(commissionId) {
+      if (!isAdmin()) return;
+      const commission = database.com.find(x => x.id === commissionId);
+      if (!commission || commission.st !== 'Liberada') return;
+
+      commission.st = 'Paga';
+      addAuditLog(`Comissão da fatura ${commission.n} marcada como paga`);
+      saveData();
+      refreshView();
+    }
+
+    function openUserForm() {
+      openModal(`
+        <h3>Novo Vendedor ou Usuário</h3>
+        <div class="form-layout">
+          <label>Nome</label><input id="usr_name">
+          <label>E-mail</label><input id="usr_email" type="email">
+          <label>Senha provisória (mínimo 6 caracteres)</label><input id="usr_pass" type="password">
+          <label>Perfil</label>
+          <select id="usr_role">
+            <option value="vendedor">Vendedor</option>
+            <option value="gerente">Gerente comercial</option>
+            <option value="admin">Administrador</option>
+          </select>
+          <label>Comissão %</label>
+          <input id="usr_pct" type="number" step="0.1" value="5">
+          <br><br>
+          <button onclick="saveUser()">Salvar Usuário</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>`);
+    }
+
+    async function saveUser() {
+      if (!isAdmin()) return;
+      const email = getVal('usr_email').trim().toLowerCase();
+      const commissionRate = Number(getVal('usr_pct'));
+      const name = getVal('usr_name').trim();
+      const password = getVal('usr_pass');
+      const role = getVal('usr_role');
+
+      if (!name || !email.includes('@') || password.length < 6) {
+        return showToast('Informe nome, e-mail válido e senha com 6 ou mais caracteres');
+      }
+      if (!(commissionRate >= 0 && commissionRate <= 100)) {
+        return showToast('Percentual de comissão inválido');
+      }
+      if (database.users.some(u => u.email === email)) {
+        return showToast('Este e-mail já está cadastrado');
+      }
+
+      database.users.push({
+        id: nextId(),
+        nome: name,
+        email,
+        h: await sha256(password),
+        role,
+        pct: commissionRate,
+        ativo: 1
+      });
+
+      addAuditLog(`Usuário ${email} criado`);
+      saveData();
+      closeModal();
+      refreshView();
+    }
+
+    function updateUserCommission(userId, newPercentage) {
+      if (!isAdmin()) return;
+      const user = database.users.find(y => y.id === userId);
+      const parsedPercentage = Number(newPercentage);
+
+      if (!user || !(parsedPercentage >= 0 && parsedPercentage <= 100)) {
+        return showToast('Percentual inválido');
+      }
+
+      user.pct = parsedPercentage;
+      addAuditLog(`Comissão de ${user.nome} alterada para ${parsedPercentage}%`);
+      saveData();
+      showToast('Percentual atualizado.');
+    }
+
+    function toggleUserStatus(userId) {
+      if (!isAdmin() || userId === currentUser.id) return;
+      const user = database.users.find(x => x.id === userId);
+      user.ativo = user.ativo ? 0 : 1;
+      
+      addAuditLog(`${user.ativo ? 'Ativou' : 'Desativou'} ${user.email}`);
+      saveData();
+      refreshView();
+    }
+
+    (async () => {
+      try {
+        const res = await fetch('/api/db');
+        database = await res.json();
+      } catch (e) {}
+
+      if (!database || !database.users) {
+        database = {
+          seq: { o: 100, p: 2180, f: 500 },
+          users: [
+            { id: 'u0', nome: 'Agnaldo', email: 'admin@erp.com', h: await sha256('admin123'), role: 'admin', pct: 0, ativo: 1 },
+            { id: 'u1', nome: 'Vendedor Padrão', email: 'vendas@erp.com', h: await sha256('123456'), role: 'vendedor', pct: 5, ativo: 1 }
+          ],
+          cli: [],
+          prod: [],
+          orc: [],
+          ped: [],
+          fat: [],
+          com: [],
+          rec: [],
+          audit: [],
+          cfg: { liberaApos: 1, maxDesc: 10 }
+        };
+        saveData();
+      }
+      renderApp();
+    })();
+  </script>
+</body>
+</html>
