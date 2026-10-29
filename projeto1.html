@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>MarketLandia</title>
+  <title>MarketLandia — ERP Comercial</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Biblioteca SheetJS para leitura direta da planilha Produtos.xlsx -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg: #f5f6f8;
@@ -18,8 +20,11 @@
       --pri-dark: #b31428;
       --pri-light: #fbe9eb;
       --ok: #2e9e49;
+      --ok-bg: #e8f7ec;
       --warn: #e09f1f;
+      --warn-bg: #fef6e6;
       --bad: #d91e36;
+      --bad-bg: #fdebec;
       --dark-bar: #1f2124;
       --dark-hover: #2c2f33;
       --filter-bg: #e2e4e8;
@@ -303,6 +308,8 @@
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
     }
 
     .page-head small {
@@ -342,7 +349,7 @@
       display: grid;
       grid-template-columns: 1fr auto auto;
       gap: 6px;
-      margin-bottom: 26px;
+      margin-bottom: 22px;
       align-items: stretch;
     }
 
@@ -388,7 +395,7 @@
     .filter-tags {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
@@ -412,6 +419,24 @@
       padding: 4px 12px;
       border-radius: 3px;
       text-transform: uppercase;
+    }
+
+    .tag-btn {
+      background: #fff;
+      border: 1px solid #cfd4dc;
+      color: var(--fg);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tag-btn.on {
+      background: var(--dark-bar);
+      color: #fff;
+      border-color: var(--dark-bar);
     }
 
     .tool-grid {
@@ -514,6 +539,15 @@
       background: #fffafa;
     }
 
+    button.dark-btn {
+      background: var(--dark-bar);
+      color: #fff;
+    }
+
+    button.dark-btn:hover {
+      background: #34383d;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
@@ -575,7 +609,7 @@
     }
 
     td {
-      padding: 16px;
+      padding: 14px 16px;
       text-align: left;
       border-bottom: 1px solid var(--bd);
       vertical-align: middle;
@@ -585,6 +619,11 @@
 
     tr:hover td {
       background: #fcfcfd;
+    }
+
+    tr.row-inactive td {
+      opacity: 0.68;
+      background: #fafafa;
     }
 
     td:first-child {
@@ -599,6 +638,19 @@
       color: var(--pri);
       display: block;
       line-height: 1.1;
+    }
+
+    .sku-pill {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 800;
+      background: #f0f2f5;
+      color: #1f2124;
+      border: 1px solid #d5d9e0;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      letter-spacing: 0.03em;
     }
 
     .sub-status {
@@ -627,6 +679,30 @@
     .dot-bad { color: var(--bad); }
     .dot-bad::after { content: "●"; font-size: 10px; }
 
+    .badge-sim, .badge-nao {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-sim {
+      background: var(--ok-bg);
+      color: var(--ok);
+      border: 1px solid rgba(46, 158, 73, 0.3);
+    }
+
+    .badge-nao {
+      background: var(--bad-bg);
+      color: var(--bad);
+      border: 1px solid rgba(217, 30, 54, 0.3);
+    }
+
     .mut { color: var(--mut); }
     .ok { color: var(--ok) !important; }
     .bad { color: var(--bad) !important; }
@@ -643,6 +719,77 @@
 
     .form-layout input, .form-layout select {
       width: 100%;
+    }
+
+    /* Barra de Ferramentas da Planilha no Catálogo */
+    .sheet-bar {
+      background: #fff;
+      border: 1px solid var(--bd);
+      border-left: 4px solid var(--dark-bar);
+      border-radius: 4px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .sheet-bar-info strong {
+      display: block;
+      font-size: 13px;
+      color: var(--fg);
+    }
+
+    .sheet-bar-info small {
+      color: var(--mut);
+      font-size: 12px;
+    }
+
+    .sheet-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Card de Leitura Instantânea de Código no Pedido/Orçamento */
+    .code-lookup-box {
+      background: #f8f9fb;
+      border: 1.5px solid #d5d9e2;
+      border-radius: 6px;
+      padding: 14px;
+      margin: 10px 0 14px;
+    }
+
+    .code-preview-status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 5px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .code-preview-ok {
+      background: var(--ok-bg);
+      border: 1px solid rgba(46, 158, 73, 0.35);
+      color: #1b5e2b;
+    }
+
+    .code-preview-inactive {
+      background: var(--bad-bg);
+      border: 1px solid rgba(217, 30, 54, 0.4);
+      color: #8f1122;
+    }
+
+    .code-preview-empty {
+      background: #eef0f4;
+      color: #5a6069;
     }
 
     #modal-container {
@@ -663,7 +810,7 @@
       border-top: 4px solid var(--pri);
       border-radius: 6px;
       padding: 24px 26px;
-      width: min(680px, 100%);
+      width: min(760px, 100%);
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
     }
 
@@ -734,10 +881,12 @@
   <div id="app"></div>
   <div id="modal-container"></div>
   <div id="toast-notification"></div>
+  <!-- Input oculto para importação de planilha Excel/CSV -->
+  <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
 
   <script>
     const getEl = id => document.getElementById(id);
-    const getVal = id => getEl(id).value;
+    const getVal = id => getEl(id) ? getEl(id).value : '';
     const formatCurrency = num => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num || 0);
     const formatDate = date => new Date(date).toLocaleDateString('pt-BR');
     const escapeHtml = str => String(str ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -751,7 +900,29 @@
     let currentUser = null;
     let activePage = 'home';
     let searchQuery = '';
+    let prodStatusFilter = 'ALL'; // 'ALL' | 'SIM' | 'NAO'
     let draftOrder = null;
+    let lookedUpProduct = null;
+
+    // Amostra fiel extraída da planilha Produtos.xlsx (Cabos Cabel Auto)
+    const SAMPLE_CABEL_PRODUCTS = [
+      { codInt: '240', sku: 'BR100100', nome: 'CABO FLEX 1,00mm BR CABEL 100 METRO 750V', un: 'UN', custo: 80.13, preco: 96.52, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '241', sku: 'PT100100', nome: 'CABO FLEX 1,00mm PT CABEL 100 METRO 750V', un: 'UN', custo: 80.13, preco: 96.52, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '243', sku: 'VM100100', nome: 'CABO FLEX 1,00mm VM CABEL 100 METRO 750V', un: 'UN', custo: 80.13, preco: 96.52, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '244', sku: 'AZ100100', nome: 'CABO FLEX 1,00mm AZ CABEL 100 METRO 750V', un: 'UN', custo: 80.13, preco: 96.52, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '249', sku: 'VD150100', nome: 'CABO FLEX 1,50mm VD CABEL 100 METRO 750V', un: 'UN', custo: 118.41, preco: 141.73, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '263', sku: 'VM250100', nome: 'CABO FLEX 2,50mm VM CABEL 100 METRO 750V', un: 'UN', custo: 192.60, preco: 230.80, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '261', sku: 'PT250100', nome: 'CABO FLEX 2,50mm PT CABEL 100 METRO 750V', un: 'UN', custo: 192.60, preco: 230.80, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '264', sku: 'AZ250100', nome: 'CABO FLEX 2,50mm AZ CABEL 100 METRO 750V', un: 'UN', custo: 192.60, preco: 230.80, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '275', sku: 'PT400100', nome: 'CABO FLEX 4,00mm PT CABEL 100 METRO 750V', un: 'UN', custo: 303.65, preco: 363.26, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '286', sku: 'VM600100', nome: 'CABO FLEX 6,00mm VM CABEL 100 METRO 750V', un: 'UN', custo: 451.83, preco: 540.02, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '295', sku: 'PT1000100', nome: 'CABO FLEX 10,00mm PT CABEL 100 METRO 750V', un: 'UN', custo: 779.02, preco: 932.33, est: 100, cat: 'CABO FLEX 750V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '372', sku: 'GUARD600VAM1', nome: 'CABO GUARD 6,00mm AM CABEL 1 ROLO 750V', un: 'UN', custo: 447.82, preco: 540.02, est: 100, cat: 'CABO GUARD 750V', marca: 'CABEL AUTO', ativo: 0 },
+      { codInt: '374', sku: 'GUARD600VBR1', nome: 'CABO GUARD 6,00mm BR CABEL 1 ROLO 750V', un: 'UN', custo: 447.82, preco: 540.02, est: 100, cat: 'CABO GUARD 750V', marca: 'CABEL AUTO', ativo: 0 },
+      { codInt: '379', sku: 'PP500V2150100', nome: 'CABO PP 2X1,50mm PT CABEL 100 METRO 500V', un: 'UN', custo: 318.92, preco: 367.35, est: 100, cat: 'CABO PP 500V', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '478', sku: 'HEPR2500MT', nome: 'CABO HEPR 25,00mm PT CABEL METRO 1KV', un: 'MT', custo: 19.65, preco: 23.09, est: 100, cat: 'CABO HEPR 1KV', marca: 'CABEL AUTO', ativo: 1 },
+      { codInt: '551', sku: 'NU120MT', nome: 'CABO COBRE NU 120,00mm CABEL METRO', un: 'MT', custo: 97.69, preco: 119.57, est: 100, cat: 'CABO COBRE NU', marca: 'CABEL AUTO', ativo: 1 }
+    ];
 
     // Salva no servidor do Render (/api/db) e mantém cópia de segurança local
     const saveData = async () => {
@@ -777,9 +948,18 @@
     const isManager = () => currentUser?.role !== 'vendedor';
     const filterByOwnership = list => isManager() ? list : list.filter(item => item.vend === currentUser.id);
 
+    // Verifica se um produto está ativo (compatível com registros antigos onde ativo era undefined)
+    const isProductActive = prod => prod && prod.ativo !== 0 && prod.ativo !== false && String(prod.ativo).toLowerCase() !== 'não' && String(prod.ativo).toLowerCase() !== 'nao';
+
     const getEntityName = (collection, id) => {
       const match = database[collection].find(entry => entry.id === id);
       return escapeHtml(match?.nome || '—');
+    };
+
+    const getProductDisplay = id => {
+      const match = database.prod.find(entry => entry.id === id);
+      if (!match) return '—';
+      return `<span class="sku-pill">${escapeHtml(match.sku)}</span> <b>${escapeHtml(match.nome)}</b>`;
     };
 
     const sumCollection = (arr, fn) => arr.reduce((acc, item) => acc + fn(item), 0);
@@ -789,7 +969,7 @@
       const toast = getEl('toast-notification');
       toast.textContent = message;
       toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 3200);
+      setTimeout(() => { toast.style.display = 'none'; }, 3600);
     };
 
     const openModal = htmlContent => {
@@ -818,20 +998,25 @@
       </div>
       <div class="action-panel">
         <div class="filter-box">
-          <label>Localizar por</label>
+          <label>Localizar por Código (ex: VM250100), Descrição, Cliente ou Status</label>
           <div class="filter-input-wrap">
-            <input placeholder="Buscar termo nesta listagem…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
+            <input placeholder="Digite o código (ex: VM250100) ou nome do cabo/cliente…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
           </div>
           <div class="filter-tags">
             <span class="tag-active">MÓDULO: ${title.toUpperCase()} ✕</span>
             <span class="tag-dashed">FILTRO ATIVO</span>
+            ${activePage === 'prod' ? `
+              <button class="tag-btn ${prodStatusFilter === 'ALL' ? 'on' : ''}" onclick="prodStatusFilter='ALL';refreshView()">Todos (${database.prod.length})</button>
+              <button class="tag-btn ${prodStatusFilter === 'SIM' ? 'on' : ''}" onclick="prodStatusFilter='SIM';refreshView()">Ativo: Sim (${database.prod.filter(isProductActive).length})</button>
+              <button class="tag-btn ${prodStatusFilter === 'NAO' ? 'on' : ''}" onclick="prodStatusFilter='NAO';refreshView()">Ativo: Não (${database.prod.filter(p => !isProductActive(p)).length})</button>
+            ` : ''}
           </div>
         </div>
         <div class="tool-grid">
           <button class="tool-btn" onclick="refreshView()" title="Atualizar lista">☰</button>
           <button class="tool-btn" onclick="window.print()" title="Imprimir tela">🖨️</button>
           <button class="tool-btn" onclick="saveData();showToast('Sincronizado com o banco de dados')" title="Sincronizar">⇅</button>
-          <button class="tool-btn" onclick="searchQuery='';refreshView()" title="Limpar busca">↺</button>
+          <button class="tool-btn" onclick="searchQuery='';prodStatusFilter='ALL';refreshView()" title="Limpar busca">↺</button>
         </div>
         ${addCallback ? `
           <button class="add-big-btn" onclick="${addCallback}">
@@ -848,7 +1033,7 @@
     const renderTable = (headers, rows, bypassFilter = false) => {
       let filteredRows = rows;
       if (!bypassFilter && searchQuery) {
-        filteredRows = rows.filter(cols => 
+        filteredRows = rows.filter(cols =>
           cols.join(' ')
             .replace(/<option[^<]*<\/option>/g, '')
             .replace(/<[^>]*>/g, ' ')
@@ -863,8 +1048,8 @@
               <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
             </thead>
             <tbody>
-              ${filteredRows.length > 0 
-                ? filteredRows.map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') 
+              ${filteredRows.length > 0
+                ? filteredRows.map(cols => `<tr>${cols.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')
                 : `<tr><td colspan="${headers.length}" class="mut">Nenhum registro encontrado.</td></tr>`}
             </tbody>
           </table>
@@ -897,7 +1082,7 @@
     };
 
     const STATUS_LIST = ['Rascunho', 'Enviado', 'Em negociação', 'Aprovado pelo cliente', 'Recusado', 'Expirado'];
-    
+
     const APP_NAVIGATION = [
       ['home', 'Início', '🏠', false],
       ['prod', 'Catálogo', '➕', false],
@@ -921,11 +1106,11 @@
 
       const passHash = await sha256(passInput);
       const user = database.users.find(u => u.ativo && u.email === emailInput && u.h === passHash);
-      
+
       if (!user) return showToast('E-mail ou senha inválidos.');
-      
+
       currentUser = user;
-      activePage = 'ped';
+      activePage = 'prod';
       addAuditLog('Login realizado');
       await saveData();
       renderApp();
@@ -946,13 +1131,13 @@
 
     function renderApp() {
       const container = getEl('app');
-      
+
       if (!currentUser) {
         container.innerHTML = `
           <div class="login-bg">
             <div class="login-box form-layout">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-                <div class="logo" style="color:#1f2124">Comercial<span>ERP</span></div>
+                <div class="logo" style="color:#1f2124">Market<span>Landia</span></div>
                 <small class="mut" style="font-weight:700">ACESSO</small>
               </div>
               <h2 style="font-family:var(--font-serif);color:var(--pri);margin:0 0 18px;font-size:24px">Bem-vindo de volta</h2>
@@ -991,11 +1176,11 @@
                 <span class="pill-active">⚡ ERP</span>
                 <span class="pill-item" onclick="navigateTo('rec')">💲 Financeiro</span>
                 <span class="pill-item" onclick="navigateTo('ped')">🖥️ PDV / Vendas</span>
-                <span class="pill-item" onclick="navigateTo('prod')">📦 Catálogo</span>
+                <span class="pill-item" onclick="navigateTo('prod')">📦 Catálogo (${database.prod.length})</span>
               </div>
             </div>
             <div class="top-search">
-              <input placeholder="Procure por cliente, pedido, SKU ou status…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
+              <input placeholder="Procure por código (ex: VM250100), cabo, cliente ou pedido…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
             </div>
             <div class="top-user">
               <div class="avatar">${escapeHtml(initials)}</div>
@@ -1031,7 +1216,7 @@
         <div class="login-bg">
           <div class="login-box form-layout">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <div class="logo" style="color:#1f2124">Comercial<span>ERP</span></div>
+              <div class="logo" style="color:#1f2124">Market<span>Landia</span></div>
               <small class="mut" style="font-weight:700">NOVA CONTA</small>
             </div>
             <h2 style="font-family:var(--font-serif);color:var(--pri);margin:0 0 18px;font-size:24px">Crie seu acesso</h2>
@@ -1064,7 +1249,6 @@
       }
 
       const passHash = await sha256(password);
-      // Se não houver nenhum usuário no banco do Render ainda, o primeiro cadastrado vira Admin
       const userRole = database.users.length === 0 ? 'admin' : 'vendedor';
 
       database.users.push({
@@ -1095,6 +1279,166 @@
       getEl('main-content').innerHTML = PAGES[activePage]();
     }
 
+    // =========================================================================
+    // IMPORTAÇÃO E PARSE DO MODELO DE PLANILHA (Produtos.xlsx)
+    // =========================================================================
+    function parseNumberPtBr(val) {
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      if (val == null || val === '') return 0;
+      let str = String(val).trim().replace(/[R$\s]/g, '');
+      // Se tiver vírgula e ponto (ex: 1.234,56), remove pontos de milhar e troca vírgula por ponto
+      if (str.includes(',') && str.includes('.')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+      } else if (str.includes(',')) {
+        str = str.replace(',', '.');
+      }
+      const num = parseFloat(str);
+      return isNaN(num) ? 0 : num;
+    }
+
+    function parseAtivoSimNao(val) {
+      if (val === undefined || val === null || val === '') return 1;
+      const clean = String(val).trim().toLowerCase();
+      if (['não', 'nao', 'n', '0', 'false', 'inativo', 'bloqueado'].includes(clean)) {
+        return 0;
+      }
+      return 1; // 'sim', 's', '1', 'true', 'ativo'
+    }
+
+    function normalizeUnit(val) {
+      if (!val) return 'UN';
+      const u = String(val).trim().toUpperCase();
+      if (u.startsWith('UN')) return 'UN';
+      if (u.startsWith('MET') || u === 'MT' || u === 'M') return 'MT';
+      if (u.startsWith('ROL') || u === 'RL') return 'RL';
+      return u.slice(0, 4);
+    }
+
+    function triggerExcelUpload() {
+      const input = getEl('excel-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    function handleExcelUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+          if (!rows.length) {
+            return showToast('A planilha selecionada está vazia.');
+          }
+
+          let added = 0;
+          let updated = 0;
+          let activeCount = 0;
+          let inactiveCount = 0;
+
+          rows.forEach(row => {
+            // Busca flexível pelas colunas do modelo Produtos.xlsx
+            const getCol = (...keys) => {
+              for (const k of keys) {
+                if (row[k] !== undefined && row[k] !== '') return row[k];
+                const foundKey = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+                if (foundKey && row[foundKey] !== '') return row[foundKey];
+              }
+              return '';
+            };
+
+            const rawSku = String(getCol('Código de Barras', 'Codigo de Barras', 'Código', 'SKU', 'Código Interno')).trim().toUpperCase();
+            const rawCodInt = String(getCol('Código Interno', 'Codigo Interno')).trim();
+            const rawNome = String(getCol('Descrição', 'Descricao', 'Nome', 'Produto')).trim();
+
+            if (!rawSku || !rawNome) return;
+
+            const rawAtivo = getCol('Ativo', 'Status');
+            const ativoFlag = parseAtivoSimNao(rawAtivo);
+            if (ativoFlag === 1) activeCount++; else inactiveCount++;
+
+            const custo = parseNumberPtBr(getCol('Preço de Custo', 'Preco de Custo', 'Custo'));
+            let preco = parseNumberPtBr(getCol('Preço Venda Varejo', 'Preco Venda Varejo', 'Preço de Venda', 'Preco'));
+            const precoPor = parseNumberPtBr(getCol('Preço Por', 'Preco Por', 'Preço De'));
+            if (!(preco > 0) && precoPor > 0) {
+              preco = precoPor;
+            }
+
+            const un = normalizeUnit(getCol('Unidade', 'UN'));
+            const estRaw = getCol('Quantidade em Estoque', 'Estoque', 'Qtd');
+            const est = estRaw === '' ? 100 : parseNumberPtBr(estRaw);
+            const cat = String(getCol('Categoria do Produto', 'Categoria')).trim() || 'GERAL';
+            const marca = String(getCol('Marca', 'Fabricante')).trim() || 'CABEL AUTO';
+
+            const existing = database.prod.find(p => p.sku.toUpperCase() === rawSku);
+            if (existing) {
+              existing.codInt = rawCodInt || existing.codInt || '';
+              existing.nome = rawNome;
+              existing.un = un;
+              existing.custo = custo;
+              existing.preco = preco > 0 ? preco : existing.preco;
+              existing.est = est;
+              existing.cat = cat;
+              existing.marca = marca;
+              existing.ativo = ativoFlag;
+              updated++;
+            } else {
+              database.prod.push({
+                id: nextId(),
+                codInt: rawCodInt,
+                sku: rawSku,
+                nome: rawNome,
+                un,
+                custo,
+                preco,
+                est,
+                cat,
+                marca,
+                ativo: ativoFlag
+              });
+              added++;
+            }
+          });
+
+          addAuditLog(`Planilha ${file.name} importada: ${added} novos, ${updated} atualizados (${activeCount} Ativos / ${inactiveCount} Inativos)`);
+          await saveData();
+          refreshView();
+          showToast(`Planilha importada! ${added} novos, ${updated} atualizados (${activeCount} Sim / ${inactiveCount} Não).`);
+        } catch (err) {
+          console.error(err);
+          showToast('Erro ao ler o arquivo Excel. Verifique se é um arquivo .xlsx ou .csv válido.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    async function loadSampleCabelSpreadsheet() {
+      let added = 0;
+      let updated = 0;
+      SAMPLE_CABEL_PRODUCTS.forEach(item => {
+        const existing = database.prod.find(p => p.sku.toUpperCase() === item.sku.toUpperCase());
+        if (existing) {
+          Object.assign(existing, item);
+          updated++;
+        } else {
+          database.prod.push({ id: nextId(), ...item });
+          added++;
+        }
+      });
+      addAuditLog(`Base modelo Produtos.xlsx carregada (${added} novos, ${updated} atualizados)`);
+      await saveData();
+      refreshView();
+      showToast(`Produtos da planilha carregados! Teste o código VM250100 no Orçamento/Pedido.`);
+    }
+
     const PAGES = {
       home() {
         const orders = filterByOwnership(database.ped);
@@ -1117,15 +1461,15 @@
           <div class="cards">
             ${renderCard('Pedidos (valor total)', formatCurrency(sumCollection(orders, calculateOrderTotal)))}
             ${renderCard('Orçamentos em aberto', quotes.filter(x => STATUS_LIST.slice(0, 3).includes(x.st)).length)}
-            ${renderCard('Conversão de orçamentos', (quotes.length ? Math.round(quotes.filter(x => x.ped).length / quotes.length * 100) : 0) + '%')}
+            ${renderCard('Produtos Ativos (Sim)', database.prod.filter(isProductActive).length, 'ok')}
+            ${renderCard('Produtos Inativos (Não)', database.prod.filter(p => !isProductActive(p)).length, 'bad')}
             ${renderCard('Faturado', formatCurrency(sumCollection(filterByOwnership(database.fat), x => x.total)))}
             ${renderCard('Recebido', formatCurrency(sumCollection(receivables, x => x.pago)), 'ok')}
             ${renderCard('A receber', formatCurrency(sumCollection(receivables, x => x.valor - x.pago)))}
             ${renderCard('Pedidos aguardando faturamento', pendingOrders.length)}
             ${renderCard('Comissão prevista', formatCurrency(commissionEstimate))}
-            ${renderCard('Comissões a pagar', formatCurrency(sumCollection(filterByOwnership(database.com).filter(x => x.st !== 'Paga'), x => x.valor)))}
-          </div>` + 
-          (isManager() ? '<h3 style="font-family:var(--font-serif);font-size:20px;color:var(--pri)">Ranking de Vendedores</h3>' + 
+          </div>` +
+          (isManager() ? '<h3 style="font-family:var(--font-serif);font-size:20px;color:var(--pri)">Ranking de Vendedores</h3>' +
             renderTable(['Vendedor', 'Total em Pedidos'], sellerRanking.map(row => [escapeHtml(row[0]), `<b>${formatCurrency(row[1])}</b>`]), true) : '');
       },
 
@@ -1143,26 +1487,66 @@
       },
 
       prod() {
-        return renderHeader('CATÁLOGO', 'PRODUTOS E SERVIÇOS', isManager() ? 'openProductForm()' : '') +
-          renderTable(['SKU', 'DESCRIÇÃO DO ITEM', 'UN.', 'CUSTO', 'PREÇO DE VENDA', 'MARGEM', 'ESTOQUE'],
-            database.prod.map(p => [
-              `<span class="num-serif" style="font-size:15px">${escapeHtml(p.sku)}</span>`,
-              `<b>${escapeHtml(p.nome.toUpperCase())}</b>`,
-              escapeHtml(p.un),
-              isManager() ? formatCurrency(p.custo) : '—',
-              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
-              isManager() ? Math.round((p.preco - p.custo) / p.preco * 100) + '%' : '—',
-              p.est == null ? '<span class="mut">SERVIÇO</span>' : p.est > 0 ? `<span class="dot-ok">${p.est} UN</span>` : `<span class="dot-bad">${p.est} UN</span>`
-            ]));
+        const filteredProducts = database.prod.filter(p => {
+          if (prodStatusFilter === 'SIM') return isProductActive(p);
+          if (prodStatusFilter === 'NAO') return !isProductActive(p);
+          return true;
+        });
+
+        return renderHeader('CATÁLOGO (MODELO PLANILHA)', 'PRODUTOS E CABOS', isManager() ? 'openProductForm()' : '') + `
+          <div class="sheet-bar">
+            <div class="sheet-bar-info">
+              <strong>📊 Importação no Modelo da Planilha (Produtos.xlsx)</strong>
+              <small>Lê automaticamente: <b>Código de Barras</b> (ex: <code>VM250100</code>), <b>Descrição</b> (nome do cabo), <b>Ativo</b> (<code>Sim</code> / <code>Não</code>), Custo, Preço Varejo e Estoque.</small>
+            </div>
+            <div class="sheet-bar-actions">
+              ${isManager() ? `
+                <button onclick="triggerExcelUpload()">📥 Importar Planilha (.xlsx / .csv)</button>
+                <button class="secondary" onclick="loadSampleCabelSpreadsheet()">⚡ Carregar Cabos da Planilha (Ex: VM250100)</button>
+              ` : ''}
+              <button class="dark-btn" onclick="openQuoteForm()">🛒 Lançar Orçamento por Código</button>
+            </div>
+          </div>
+        ` +
+          renderTable(
+            ['CÓDIGO (PEDIDO)', 'DESCRIÇÃO DO CABO / NOME', 'CATEGORIA', 'ATIVO (SIM/NÃO)', 'UN.', 'CUSTO', 'PREÇO VENDA', 'MARGEM', 'ESTOQUE', 'AÇÃO'],
+            filteredProducts.map(p => {
+              const active = isProductActive(p);
+              const margin = p.preco > 0 ? Math.round((p.preco - p.custo) / p.preco * 100) : 0;
+              return [
+                `<span class="sku-pill">${escapeHtml(p.sku)}</span>${p.codInt ? `<br><small class="mut">Cód. Int: ${escapeHtml(p.codInt)}</small>` : ''}`,
+                `<b>${escapeHtml(p.nome.toUpperCase())}</b>${p.marca ? `<br><small class="mut">${escapeHtml(p.marca)}</small>` : ''}`,
+                `<small class="mut"><b>${escapeHtml(p.cat || '—')}</b></small>`,
+                active
+                  ? `<span class="badge-sim">● SIM</span>`
+                  : `<span class="badge-nao">✕ NÃO</span>`,
+                escapeHtml(p.un),
+                isManager() ? formatCurrency(p.custo) : '—',
+                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
+                isManager() ? `${margin}%` : '—',
+                p.est == null ? '<span class="mut">SERVIÇO</span>' : p.est > 0 ? `<span class="dot-ok">${p.est} ${escapeHtml(p.un)}</span>` : `<span class="dot-bad">${p.est} ${escapeHtml(p.un)}</span>`,
+                isManager()
+                  ? `<div style="display:flex;gap:6px">
+                      <button class="secondary" style="padding:5px 9px;font-size:12px" onclick="openProductForm('${p.id}')" title="Editar Produto">✏️</button>
+                      <button class="secondary" style="padding:5px 9px;font-size:12px" onclick="toggleProductActive('${p.id}')" title="Alternar Ativo Sim/Não">${active ? 'Inativar (Não)' : 'Ativar (Sim)'}</button>
+                    </div>`
+                  : '—'
+              ];
+            })
+          );
       },
 
       orc() {
         return renderHeader('VENDAS', 'ORÇAMENTOS', 'openQuoteForm()') +
-          renderTable(['ORÇAMENTO', 'DATA', 'CLIENTE', 'VENDEDOR', 'VALOR', 'STATUS', 'AÇÃO'],
+          renderTable(['ORÇAMENTO', 'DATA', 'CLIENTE', 'ITENS (CÓD. / CABO)', 'VENDEDOR', 'VALOR', 'STATUS', 'AÇÃO'],
             filterByOwnership(database.orc).slice().reverse().map(o => [
               `<span class="num-serif">${o.n}</span><span class="sub-status">${escapeHtml(o.st)}</span>`,
               formatDate(o.data),
               `<b>${getEntityName('cli', o.cli).toUpperCase()}</b>`,
+              `<small>${o.itens.map(i => {
+                const pr = database.prod.find(x => x.id === i.p);
+                return pr ? `<b>${escapeHtml(pr.sku)}</b> (${i.q}x)` : `${i.q}x`;
+              }).join(', ')}</small>`,
               getEntityName('users', o.vend),
               `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(calculateOrderTotal(o))}</b>`,
               o.ped ? '<span class="dot-ok">CONVERTIDO</span>' : `<select onchange="updateQuoteStatus('${o.id}', this.value)">${STATUS_LIST.map(s => `<option${s === o.st ? ' selected' : ''}>${s}</option>`).join('')}</select>`,
@@ -1273,7 +1657,7 @@
               Base da comissão: valor líquido dos itens faturados, sem frete.
             </p>
           </div>` +
-          renderTable(['DATA E HORA', 'USUÁRIO', 'AÇÃO REGISTRADA'], 
+          renderTable(['DATA E HORA', 'USUÁRIO', 'AÇÃO REGISTRADA'],
             database.audit.slice(0, 100).map(log => [new Date(log.t).toLocaleString('pt-BR'), `<b>${escapeHtml(log.u)}</b>`, escapeHtml(log.a)]));
       }
     };
@@ -1346,121 +1730,355 @@
       refreshView();
     }
 
-    function openProductForm() {
+    // =========================================================================
+    // CADASTRO E EDIÇÃO DE PRODUTOS NO MODELO DA PLANILHA (VM250100, Ativo Sim/Não, Descrição do Cabo)
+    // =========================================================================
+    function openProductForm(editId = '') {
+      const existing = editId ? database.prod.find(p => p.id === editId) : null;
+      const isAtivo = existing ? isProductActive(existing) : true;
+
       openModal(`
-        <h3>Novo Produto ou Serviço</h3>
+        <h3>${existing ? `Editar Produto (${escapeHtml(existing.sku)})` : 'Adicionar Produto (Modelo Planilha)'}</h3>
         <div class="form-layout">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label>SKU / Código</label><input id="prod_sku"></div>
-            <div><label>Unidade</label><input id="prod_unit" value="UN"></div>
+          <div style="display:grid;grid-template-columns:1.3fr 0.9fr 1fr;gap:10px">
+            <div>
+              <label>Código de Barras / Código p/ Pedido *</label>
+              <input id="prod_sku" placeholder="Ex: VM250100" value="${escapeHtml(existing?.sku || '')}" style="font-weight:700;text-transform:uppercase">
+            </div>
+            <div>
+              <label>Código Interno</label>
+              <input id="prod_codint" placeholder="Ex: 263" value="${escapeHtml(existing?.codInt || '')}">
+            </div>
+            <div>
+              <label>Produto Ativo? (Sim / Não) *</label>
+              <select id="prod_ativo">
+                <option value="Sim" ${isAtivo ? 'selected' : ''}>Sim (Liberado p/ Pedido)</option>
+                <option value="Não" ${!isAtivo ? 'selected' : ''}>Não (Bloqueado p/ Pedido)</option>
+              </select>
+            </div>
           </div>
-          <label>Nome / Descrição</label>
-          <input id="prod_name">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><label>Preço de Custo (R$)</label><input id="prod_cost" type="number" step="0.01"></div>
-            <div><label>Preço de Venda (R$)</label><input id="prod_price" type="number" step="0.01"></div>
+
+          <label>Descrição do Cabo / Nome do Produto *</label>
+          <input id="prod_name" placeholder="Ex: CABO FLEX 2,50mm VM CABEL 100 METRO 750V" value="${escapeHtml(existing?.nome || '')}">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div>
+              <label>Unidade</label>
+              <select id="prod_unit">
+                <option value="UN" ${existing?.un === 'UN' ? 'selected' : ''}>Unidade (UN)</option>
+                <option value="MT" ${existing?.un === 'MT' ? 'selected' : ''}>Metro (MT)</option>
+                <option value="RL" ${existing?.un === 'RL' ? 'selected' : ''}>Rolo (RL)</option>
+              </select>
+            </div>
+            <div>
+              <label>Categoria do Produto</label>
+              <input id="prod_cat" placeholder="Ex: CABO FLEX 750V" value="${escapeHtml(existing?.cat || 'CABO FLEX 750V')}">
+            </div>
+            <div>
+              <label>Marca</label>
+              <input id="prod_marca" placeholder="Ex: CABEL AUTO" value="${escapeHtml(existing?.marca || 'CABEL AUTO')}">
+            </div>
           </div>
-          <label>Estoque Inicial (vazio para serviços)</label>
-          <input id="prod_stock" type="number">
-          <br><br>
-          <button onclick="saveProduct()">Salvar Item</button>
-          <button class="secondary" onclick="closeModal()">Cancelar</button>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div>
+              <label>Preço de Custo (R$)</label>
+              <input id="prod_cost" type="number" step="0.01" placeholder="Ex: 192.60" value="${existing ? existing.custo : ''}">
+            </div>
+            <div>
+              <label>Preço Venda Varejo (R$) *</label>
+              <input id="prod_price" type="number" step="0.01" placeholder="Ex: 230.80" value="${existing ? existing.preco : ''}">
+            </div>
+            <div>
+              <label>Quantidade em Estoque</label>
+              <input id="prod_stock" type="number" placeholder="Ex: 100" value="${existing && existing.est != null ? existing.est : '100'}">
+            </div>
+          </div>
+
+          <br>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveProduct('${existing ? existing.id : ''}')">${existing ? 'Salvar Alterações' : 'Cadastrar Produto'}</button>
+            <button class="secondary" onclick="closeModal()">Cancelar</button>
+          </div>
         </div>`);
     }
 
-    function saveProduct() {
+    function saveProduct(editId = '') {
       if (!isManager()) return;
-      const salePrice = Number(getVal('prod_price'));
-      const sku = getVal('prod_sku').trim();
+      const sku = getVal('prod_sku').trim().toUpperCase();
+      const codInt = getVal('prod_codint').trim();
       const name = getVal('prod_name').trim();
+      const ativoStr = getVal('prod_ativo');
+      const ativoFlag = parseAtivoSimNao(ativoStr);
+      const salePrice = Number(getVal('prod_price'));
+      const costPrice = Number(getVal('prod_cost')) || 0;
       const stockInput = getVal('prod_stock');
+      const cat = getVal('prod_cat').trim() || 'GERAL';
+      const marca = getVal('prod_marca').trim() || 'CABEL AUTO';
 
-      if (!sku || !name || !(salePrice > 0)) return showToast('Informe SKU, nome e preço de venda');
-      if (database.prod.some(p => p.sku === sku)) return showToast('Este SKU já existe');
+      if (!sku || !name || !(salePrice > 0)) {
+        return showToast('Informe o Código (ex: VM250100), a Descrição do Cabo e o Preço de Venda.');
+      }
 
-      database.prod.push({
-        id: nextId(),
-        sku,
-        nome: name,
-        un: getVal('prod_unit'),
-        custo: Number(getVal('prod_cost')) || 0,
-        preco: salePrice,
-        est: stockInput === '' ? null : Number(stockInput)
-      });
+      const duplicate = database.prod.find(p => p.sku.toUpperCase() === sku && p.id !== editId);
+      if (duplicate) {
+        return showToast(`O código ${sku} já está cadastrado para "${duplicate.nome}".`);
+      }
 
-      addAuditLog(`Produto ${sku} criado`);
+      if (editId) {
+        const target = database.prod.find(p => p.id === editId);
+        if (!target) return;
+        target.sku = sku;
+        target.codInt = codInt;
+        target.nome = name;
+        target.ativo = ativoFlag;
+        target.un = getVal('prod_unit');
+        target.custo = costPrice;
+        target.preco = salePrice;
+        target.est = stockInput === '' ? null : Number(stockInput);
+        target.cat = cat;
+        target.marca = marca;
+        addAuditLog(`Produto ${sku} (${name}) atualizado — Ativo: ${ativoFlag ? 'Sim' : 'Não'}`);
+      } else {
+        database.prod.push({
+          id: nextId(),
+          codInt,
+          sku,
+          nome: name,
+          ativo: ativoFlag,
+          un: getVal('prod_unit'),
+          custo: costPrice,
+          preco: salePrice,
+          est: stockInput === '' ? null : Number(stockInput),
+          cat,
+          marca
+        });
+        addAuditLog(`Produto ${sku} (${name}) criado — Ativo: ${ativoFlag ? 'Sim' : 'Não'}`);
+      }
+
       saveData();
       closeModal();
       refreshView();
+      showToast(`Produto ${sku} salvo com sucesso!`);
     }
 
+    function toggleProductActive(prodId) {
+      if (!isManager()) return;
+      const product = database.prod.find(p => p.id === prodId);
+      if (!product) return;
+      product.ativo = isProductActive(product) ? 0 : 1;
+      addAuditLog(`Status do produto ${product.sku} alterado para Ativo: ${product.ativo ? 'Sim' : 'Não'}`);
+      saveData();
+      refreshView();
+      showToast(`Produto ${product.sku} marcado como Ativo: ${product.ativo ? 'Sim' : 'Não'}`);
+    }
+
+    // =========================================================================
+    // ORÇAMENTOS E PEDIDOS COM LEITURA POR CÓDIGO (Ex: VM250100) E VALIDAÇÃO ATIVO SIM/NÃO
+    // =========================================================================
     function openQuoteForm() {
-      draftOrder = { itens: [], cli: '', frete: 0, parc: 1 };
+      draftOrder = { itens: [], cli: '', frete: 0, parc: 1, codeInput: '' };
+      lookedUpProduct = null;
       renderQuoteModal();
     }
 
     function syncDraftValues() {
-      draftOrder.cli = getVal('quote_cli');
-      draftOrder.frete = Number(getVal('quote_freight')) || 0;
-      draftOrder.parc = Number(getVal('quote_installments')) || 1;
+      if (getEl('quote_cli')) draftOrder.cli = getVal('quote_cli');
+      if (getEl('quote_freight')) draftOrder.frete = Number(getVal('quote_freight')) || 0;
+      if (getEl('quote_installments')) draftOrder.parc = Number(getVal('quote_installments')) || 1;
+      if (getEl('quote_code_input')) draftOrder.codeInput = getVal('quote_code_input');
+    }
+
+    function onCodeInputLookup(rawCode) {
+      draftOrder.codeInput = rawCode;
+      const cleanCode = String(rawCode || '').trim().toUpperCase();
+      const statusEl = getEl('code_lookup_status');
+      const selectEl = getEl('quote_item');
+
+      if (!cleanCode) {
+        lookedUpProduct = null;
+        if (statusEl) {
+          statusEl.className = 'code-preview-status code-preview-empty';
+          statusEl.innerHTML = `<span>Digite um código da planilha (ex: <b>VM250100</b>, <b>BR100100</b> ou <b>GUARD600VAM1</b>) para buscar a descrição do cabo e verificar se está Ativo (Sim/Não).</span>`;
+        }
+        return;
+      }
+
+      // Procura por correspondência exata de SKU ou Código Interno, ou parcial se único
+      let match = database.prod.find(p => p.sku.toUpperCase() === cleanCode || (p.codInt && String(p.codInt).toUpperCase() === cleanCode));
+      if (!match) {
+        const partials = database.prod.filter(p => p.sku.toUpperCase().startsWith(cleanCode));
+        if (partials.length === 1) match = partials[0];
+      }
+
+      lookedUpProduct = match || null;
+
+      if (!match) {
+        if (statusEl) {
+          statusEl.className = 'code-preview-status code-preview-empty';
+          statusEl.innerHTML = `<span>Nenhum produto encontrado com o código <b>${escapeHtml(cleanCode)}</b>.</span>`;
+        }
+        return;
+      }
+
+      const active = isProductActive(match);
+      if (selectEl && active) {
+        selectEl.value = match.id;
+      }
+
+      if (statusEl) {
+        if (active) {
+          statusEl.className = 'code-preview-status code-preview-ok';
+          statusEl.innerHTML = `
+            <div>
+              <span class="badge-sim">ATIVO: SIM</span>
+              <b style="margin-left:6px">${escapeHtml(match.sku)} — ${escapeHtml(match.nome)}</b>
+              <div style="font-size:12px;margin-top:3px">Unidade: <b>${escapeHtml(match.un)}</b> · Estoque: <b>${match.est ?? '—'}</b> · Preço Unitário: <b>${formatCurrency(match.preco)}</b></div>
+            </div>
+            <button type="button" onclick="addQuoteItemByLookup()">+ Incluir ${escapeHtml(match.sku)}</button>
+          `;
+        } else {
+          statusEl.className = 'code-preview-status code-preview-inactive';
+          statusEl.innerHTML = `
+            <div>
+              <span class="badge-nao">ATIVO: NÃO (BLOQUEADO)</span>
+              <b style="margin-left:6px">${escapeHtml(match.sku)} — ${escapeHtml(match.nome)}</b>
+              <div style="font-size:12px;margin-top:3px">Este cabo consta como <b>Ativo = Não</b> na planilha e não pode ser incluído no pedido/orçamento.</div>
+            </div>
+          `;
+        }
+      }
+    }
+
+    function addQuoteItemByLookup() {
+      if (!lookedUpProduct) {
+        return showToast('Digite um código válido (ex: VM250100) primeiro.');
+      }
+      if (!isProductActive(lookedUpProduct)) {
+        return showToast(`O produto ${lookedUpProduct.sku} (${lookedUpProduct.nome}) está INATIVO (Ativo: Não) e não pode ser incluído!`);
+      }
+      syncDraftValues();
+      const quantity = Number(getVal('quote_qty')) || 1;
+      const discount = Number(getVal('quote_discount')) || 0;
+
+      if (!(quantity > 0) || discount < 0 || discount > 100) {
+        return showToast('Informe quantidade maior que zero e desconto entre 0 e 100%');
+      }
+      if (currentUser.role === 'vendedor' && discount > database.cfg.maxDesc) {
+        return showToast(`Desconto acima de ${database.cfg.maxDesc}% exige aprovação do administrador`);
+      }
+
+      draftOrder.itens.push({ p: lookedUpProduct.id, q: quantity, pu: lookedUpProduct.preco, d: discount });
+      draftOrder.codeInput = '';
+      lookedUpProduct = null;
+      renderQuoteModal();
+      showToast('Cabo adicionado ao orçamento!');
     }
 
     function renderQuoteModal() {
       const availableClients = filterByOwnership(database.cli).filter(c => c.ativo);
       openModal(`
-        <h3>Novo Orçamento de Venda</h3>
+        <h3>Novo Orçamento / Pedido de Venda</h3>
         <div class="form-layout">
           <label>Cliente</label>
           <select id="quote_cli">
-            ${availableClients.map(c => `<option value="${c.id}" ${c.id === draftOrder.cli ? 'selected' : ''}>${escapeHtml(c.nome)}</option>`).join('')}
+            ${availableClients.length
+              ? availableClients.map(c => `<option value="${c.id}" ${c.id === draftOrder.cli ? 'selected' : ''}>${escapeHtml(c.nome)}</option>`).join('')
+              : `<option value="">— Cadastre um cliente no menu Clientes primeiro —</option>`}
           </select>
-          <label>Produto ou Serviço</label>
-          <select id="quote_item">
-            ${database.prod.map(p => `<option value="${p.id}">${escapeHtml(p.nome)} — ${formatCurrency(p.preco)}</option>`).join('')}
-          </select>
-          <div style="display:flex;gap:8px;align-items:end;margin:10px 0 14px">
-            <div><label style="margin:0">Qtd</label><input id="quote_qty" type="number" value="1" min="1" style="width:90px"></div>
-            <div><label style="margin:0">Desc. %</label><input id="quote_discount" type="number" value="0" min="0" style="width:90px"></div>
-            <button onclick="addQuoteItem()">+ Adicionar item</button>
+
+          <!-- Bloco de Busca Rápida pelo Código da Planilha (Ex: VM250100) -->
+          <div class="code-lookup-box">
+            <label style="margin-top:0;color:var(--pri)">1. Digitar Código para Pedido/Orçamento (Modelo Planilha — ex: VM250100)</label>
+            <div style="display:grid;grid-template-columns:1.4fr 1.6fr;gap:10px;align-items:end">
+              <div>
+                <input id="quote_code_input" list="sku_datalist" placeholder="Ex: VM250100 e aperte Enter" value="${escapeHtml(draftOrder.codeInput || '')}" oninput="onCodeInputLookup(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addQuoteItemByLookup();}" style="font-weight:700;text-transform:uppercase">
+                <datalist id="sku_datalist">
+                  ${database.prod.map(p => `<option value="${escapeHtml(p.sku)}">${escapeHtml(p.nome)} (${isProductActive(p) ? 'Ativo: Sim' : 'Ativo: Não'}) — ${formatCurrency(p.preco)}</option>`).join('')}
+                </datalist>
+              </div>
+              <div>
+                <select id="quote_item" onchange="const pr=database.prod.find(x=>x.id===this.value);if(pr){getEl('quote_code_input').value=pr.sku;onCodeInputLookup(pr.sku);}">
+                  <option value="">— Ou selecione o cabo pela descrição —</option>
+                  ${database.prod.map(p => {
+                    const act = isProductActive(p);
+                    return `<option value="${p.id}" ${!act ? 'disabled' : ''}>[${escapeHtml(p.sku)}] ${escapeHtml(p.nome)} — ${formatCurrency(p.preco)} ${act ? '(Ativo: Sim)' : '(INATIVO: NÃO)'}</option>`;
+                  }).join('')}
+                </select>
+              </div>
+            </div>
+
+            <div id="code_lookup_status" class="code-preview-status code-preview-empty">
+              <span>Digite um código da planilha (ex: <b>VM250100</b>, <b>BR100100</b> ou <b>GUARD600VAM1</b>) para ler a descrição do cabo e verificar se está Ativo (Sim/Não).</span>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:end;margin-top:10px">
+              <div><label style="margin:0">Qtd</label><input id="quote_qty" type="number" value="1" min="1" style="width:90px"></div>
+              <div><label style="margin:0">Desc. %</label><input id="quote_discount" type="number" value="0" min="0" style="width:90px"></div>
+              <button type="button" onclick="addQuoteItem()">+ Adicionar Item ao Pedido</button>
+            </div>
           </div>
-          ${renderTable(['Item', 'Qtd', 'Preço', 'Desc.', 'Subtotal'], draftOrder.itens.map(i => [
-            getEntityName('prod', i.p),
-            i.q,
-            formatCurrency(i.pu),
-            `${i.d}%`,
-            formatCurrency(i.q * i.pu * (1 - i.d / 100))
-          ]), true)}
+
+          ${renderTable(['Código', 'Descrição do Cabo / Produto', 'Qtd', 'Preço Unit.', 'Desc.', 'Subtotal', ''], draftOrder.itens.map((i, idx) => {
+            const pr = database.prod.find(x => x.id === i.p);
+            return [
+              `<span class="sku-pill">${escapeHtml(pr?.sku || '—')}</span>`,
+              `<b>${escapeHtml(pr?.nome || '—')}</b>`,
+              i.q,
+              formatCurrency(i.pu),
+              `${i.d}%`,
+              `<b>${formatCurrency(i.q * i.pu * (1 - i.d / 100))}</b>`,
+              `<button class="secondary" style="padding:4px 8px;font-size:11px" onclick="draftOrder.itens.splice(${idx},1);renderQuoteModal()">✕</button>`
+            ];
+          }), true)}
+
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div><label>Frete e despesas (R$)</label><input id="quote_freight" type="number" step="0.01" value="${draftOrder.frete}" oninput="syncDraftValues();getEl('quote_total_display').textContent=formatCurrency(calculateOrderTotal(draftOrder))"></div>
-            <div><label>Parcelas</label><select id="quote_installments">${[1, 2, 3, 4, 5, 6].map(n => `<option ${n === draftOrder.parc ? 'selected' : ''}>${n}x</option>`).join('')}</select></div>
+            <div><label>Parcelas</label><select id="quote_installments">${[1, 2, 3, 4, 5, 6].map(n => `<option value="${n}" ${n === draftOrder.parc ? 'selected' : ''}>${n}x</option>`).join('')}</select></div>
           </div>
           <p style="font-size:17px">Total: <b id="quote_total_display" style="font-family:var(--font-serif);color:var(--pri);font-size:22px">${formatCurrency(calculateOrderTotal(draftOrder))}</b></p>
-          <button onclick="saveQuote()">Salvar Orçamento</button>
-          <button class="secondary" onclick="closeModal()">Cancelar</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="saveQuote(false)">Salvar Orçamento</button>
+            <button class="dark-btn" onclick="saveQuote(true)">⚡ Salvar e Já Converter em Pedido</button>
+            <button class="secondary" onclick="closeModal()">Cancelar</button>
+          </div>
         </div>`);
+
+      if (draftOrder.codeInput) {
+        onCodeInputLookup(draftOrder.codeInput);
+      }
     }
 
     function addQuoteItem() {
       syncDraftValues();
-      const product = database.prod.find(x => x.id === getVal('quote_item'));
+      // Se o usuário digitou um código no campo de código, prioriza o produto localizado pelo código
+      let product = lookedUpProduct || database.prod.find(x => x.id === getVal('quote_item'));
       const quantity = Number(getVal('quote_qty'));
       const discount = Number(getVal('quote_discount'));
 
-      if (!product || !(quantity > 0) || discount < 0 || discount > 100) {
-        return showToast('Escolha um item, quantidade maior que zero e desconto entre 0 e 100%');
+      if (!product) {
+        return showToast('Digite um código válido (ex: VM250100) ou selecione um produto na lista.');
+      }
+      if (!isProductActive(product)) {
+        return showToast(`Bloqueado: O produto ${product.sku} (${product.nome}) está com Ativo = Não!`);
+      }
+      if (!(quantity > 0) || discount < 0 || discount > 100) {
+        return showToast('Informe quantidade maior que zero e desconto entre 0 e 100%');
       }
       if (currentUser.role === 'vendedor' && discount > database.cfg.maxDesc) {
         return showToast(`Desconto acima de ${database.cfg.maxDesc}% exige aprovação do administrador`);
       }
 
       draftOrder.itens.push({ p: product.id, q: quantity, pu: product.preco, d: discount });
+      draftOrder.codeInput = '';
+      lookedUpProduct = null;
       renderQuoteModal();
     }
 
-    function saveQuote() {
+    function saveQuote(directOrder = false) {
       syncDraftValues();
       const client = database.cli.find(x => x.id === draftOrder.cli);
-      if (!client || !draftOrder.itens.length) return showToast('Escolha o cliente e adicione ao menos um item');
+      if (!client || !draftOrder.itens.length) return showToast('Escolha o cliente e adicione ao menos um cabo/produto.');
 
       const quote = {
         id: nextId(),
@@ -1471,13 +2089,20 @@
         itens: draftOrder.itens,
         frete: draftOrder.frete,
         parc: draftOrder.parc,
-        st: 'Rascunho',
+        st: directOrder ? 'Aprovado pelo cliente' : 'Rascunho',
         ped: null,
         hist: [[Date.now(), currentUser.nome, 'Criado']]
       };
 
       database.orc.push(quote);
       addAuditLog(`Orçamento ${quote.n} criado`);
+
+      if (directOrder) {
+        convertToOrder(quote.id);
+        closeModal();
+        return;
+      }
+
       saveData();
       closeModal();
       refreshView();
@@ -1515,7 +2140,7 @@
       quote.ped = order.id;
       quote.st = 'Convertido em pedido';
       quote.hist.push([Date.now(), currentUser.nome, `Convertido no pedido ${order.n}`]);
-      
+
       addAuditLog(`Orçamento ${quote.n} convertido no pedido ${order.n}`);
       saveData();
       refreshView();
@@ -1530,10 +2155,10 @@
       openModal(`
         <h3>Pedido #${order.n} — ${escapeHtml(order.st)}</h3>
         <p class="mut">${getEntityName('cli', order.cli)} · Vendedor: ${getEntityName('users', order.vend)} · Frete: ${formatCurrency(order.frete)} · ${order.parc}x</p>
-        ${renderTable(['Item', 'Qtd', 'Faturado', 'Saldo', 'Faturar agora'], order.itens.map((item, index) => {
+        ${renderTable(['Código / Descrição do Cabo', 'Qtd', 'Faturado', 'Saldo', 'Faturar agora'], order.itens.map((item, index) => {
           const balance = item.q - item.fat;
           return [
-            getEntityName('prod', item.p),
+            getProductDisplay(item.p),
             item.q,
             item.fat,
             balance,
@@ -1565,7 +2190,7 @@
         const invoiceQty = quantities[index];
         item.fat += invoiceQty;
         netAmount += invoiceQty * item.pu * (1 - item.d / 100);
-        
+
         const catalogItem = database.prod.find(x => x.id === item.p);
         if (catalogItem && catalogItem.est != null) {
           catalogItem.est -= invoiceQty;
@@ -1614,7 +2239,7 @@
 
       const seller = database.users.find(x => x.id === order.vend);
       const commissionRate = seller ? seller.pct : 0;
-      
+
       if (!database.com.some(c => c.fat === invoice.id)) {
         database.com.push({
           id: nextId(),
@@ -1643,7 +2268,7 @@
         if (entry.st !== 'Apurada') return;
         const relatedReceipts = database.rec.filter(x => x.fat === entry.fat);
         const isFullyPaid = relatedReceipts.every(x => (x.valor - x.pago) < 0.005);
-        
+
         if (!database.cfg.liberaApos || isFullyPaid) {
           entry.st = 'Liberada';
         }
@@ -1752,7 +2377,7 @@
       if (!isAdmin() || userId === currentUser.id) return;
       const user = database.users.find(x => x.id === userId);
       user.ativo = user.ativo ? 0 : 1;
-      
+
       addAuditLog(`${user.ativo ? 'Ativou' : 'Desativou'} ${user.email}`);
       saveData();
       refreshView();
@@ -1772,7 +2397,6 @@
         } catch (err) {}
       }
 
-      // Se o banco no Render estiver vazio/novo, cria a estrutura limpa sem logins padrão
       if (!database || !Array.isArray(database.users)) {
         database = {
           seq: { o: 100, p: 2180, f: 500 },
@@ -1787,8 +2411,16 @@
           audit: [],
           cfg: { liberaApos: 1, maxDesc: 10 }
         };
+      }
+
+      // Se o catálogo ainda estiver vazio, pré-carrega os cabos da planilha para uso imediato
+      if (Array.isArray(database.prod) && database.prod.length === 0) {
+        SAMPLE_CABEL_PRODUCTS.forEach(item => {
+          database.prod.push({ id: nextId(), ...item });
+        });
         await saveData();
       }
+
       renderApp();
     })();
   </script>
