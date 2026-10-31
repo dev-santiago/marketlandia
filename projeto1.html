@@ -2490,11 +2490,15 @@
         localStorage.setItem('marketlandia_db', JSON.stringify(database));
       } catch (e) {}
       try {
-        await fetch('/api/db', {
+        const r = await fetch('/api/db', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(database)
         });
+        if (!r.ok) {
+          console.warn('O servidor recusou a gravação (' + r.status + '). Dados mantidos só no navegador.');
+          if (typeof showToast === 'function') showToast('Atenção: não foi possível gravar no servidor.');
+        }
       } catch (e) {
         console.warn('Servidor Render inacessível no momento, salvo localmente.');
       }
@@ -5274,15 +5278,25 @@
 
     // Inicialização: busca os dados do servidor no Render (/api/db)
     (async () => {
+      let syncLocalToServer = false;
       try {
         const res = await fetch('/api/db');
         if (res.ok) {
           database = await res.json();
         }
-      } catch (e) {
+      } catch (e) {}
+
+      // Servidor fora do ar, com erro, ou banco ainda vazio: recupera a cópia local
+      if (!database || !Array.isArray(database.users)) {
         try {
           const local = localStorage.getItem('marketlandia_db');
-          if (local) database = JSON.parse(local);
+          if (local) {
+            const parsed = JSON.parse(local);
+            if (parsed && Array.isArray(parsed.users)) {
+              database = parsed;
+              syncLocalToServer = true;
+            }
+          }
         } catch (err) {}
       }
 
@@ -5328,7 +5342,7 @@
         seedChanged = true;
       }
 
-      if (seedChanged) {
+      if (seedChanged || syncLocalToServer) {
         await saveData();
       }
 
