@@ -8,18 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Biblioteca SheetJS para leitura direta da planilha Produtos.xlsx -->
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
-    /* =====================================================================
-       MARKETLANDIA — SISTEMA DE DESIGN
-       Ideia: o código de cor dos cabos (VM, PT, AZ, VD, BR, AM) é a
-       linguagem visual do sistema. Cada SKU carrega o seu trecho de cabo.
-       Fontes: Bricolage Grotesque (títulos/números), IBM Plex Sans (UI),
-       IBM Plex Mono (códigos).
-       ===================================================================== */
+
     :root {
-      /* superfícies e tinta */
+
       --bg: #eef0f3;
       --card: #ffffff;
       --sunk: #e7eaef;
@@ -30,12 +24,10 @@
       --bd: #e0e4ea;
       --bd-strong: #c8ced8;
 
-      /* marca */
       --pri: #d91e36;
       --pri-dark: #b31428;
       --pri-light: #fbe9eb;
 
-      /* estados */
       --ok: #17803d;
       --ok-bg: #e5f4ea;
       --warn: #9a5f00;
@@ -43,18 +35,15 @@
       --bad: #d91e36;
       --bad-bg: #fdebec;
 
-      /* estrutura escura (topo + menu) */
       --dark-bar: #14161a;
       --dark-hover: #23272d;
       --filter-bg: #e7eaef;
 
-      /* tipografia (--font-serif é nome legado usado em estilos inline do JS) */
       --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
       --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
       --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
       --font-serif: var(--font-display);
 
-      /* forma e movimento */
       --r-ctl: 8px;
       --r-panel: 12px;
       --r-modal: 16px;
@@ -94,7 +83,6 @@
       outline-offset: 2px;
     }
 
-    /* ---------- ícones SVG inline ---------- */
     .ico {
       width: 1.15em;
       height: 1.15em;
@@ -112,7 +100,6 @@
       height: 0.95em;
     }
 
-    /* ---------- estrutura ---------- */
     .shell {
       display: grid;
       grid-template-rows: var(--topbar-h) 1fr;
@@ -125,7 +112,6 @@
       grid-template-columns: var(--nav-w) minmax(0, 1fr);
     }
 
-    /* ---------- topo ---------- */
     .topbar {
       background: var(--dark-bar);
       color: #fff;
@@ -264,6 +250,36 @@
       letter-spacing: 0.02em;
     }
 
+    .top-user .avatar {
+      cursor: pointer;
+      overflow: hidden;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .top-user .avatar:hover {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+    }
+
+    .top-user .avatar:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar.avatar-lg {
+      width: 84px;
+      height: 84px;
+      font-size: 28px;
+      flex: none;
+      overflow: hidden;
+    }
+
     .user-info {
       line-height: 1.2;
       text-align: left;
@@ -288,7 +304,6 @@
       outline-color: #fff;
     }
 
-    /* ---------- menu lateral ---------- */
     nav {
       background: var(--dark-bar);
       color: #aeb4be;
@@ -392,7 +407,6 @@
       background: transparent;
     }
 
-    /* sem JS o indicador não existe: o item ativo se pinta sozinho */
     .nav-list:not(.js-ind) a.on {
       background: var(--pri);
     }
@@ -421,7 +435,6 @@
       color: #fff;
     }
 
-    /* ---------- conteúdo ---------- */
     main {
       padding: 32px 40px 64px;
       min-width: 0;
@@ -503,7 +516,6 @@
       margin: 0 0 12px;
     }
 
-    /* ---------- painel de busca + ações ---------- */
     .action-panel {
       display: grid;
       grid-template-columns: 1fr auto auto;
@@ -676,7 +688,6 @@
       margin-top: 1px;
     }
 
-    /* ---------- campos e botões ---------- */
     input, select {
       font: inherit;
       font-size: 14px;
@@ -818,7 +829,6 @@
       color: var(--fg);
     }
 
-    /* ---------- indicadores ---------- */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -851,7 +861,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ---------- tabelas ---------- */
     .table-wrapper {
       background: var(--card);
       border: 1px solid var(--bd);
@@ -911,7 +920,6 @@
       font-weight: 600;
     }
 
-    /* estado vazio */
     .table-wrapper td.mut[colspan] {
       text-align: center;
       padding: 48px 16px;
@@ -949,7 +957,6 @@
       color: var(--mut);
     }
 
-    /* ---------- assinatura: SKU com o trecho de cabo na cor da isolação ---------- */
     .sku-pill {
       display: inline-flex;
       align-items: center;
@@ -992,7 +999,6 @@
     .sku-pill[data-cor="br"] { --cab: #fbfbf8; }
     .sku-pill[data-cor="am"] { --cab: #f5bd0a; }
 
-    /* ---------- status ---------- */
     .dot-ok, .dot-warn, .dot-bad {
       display: inline-flex;
       align-items: center;
@@ -1037,7 +1043,6 @@
       color: var(--bad);
     }
 
-    /* ---------- barra de planilha (catálogo) ---------- */
     .sheet-bar {
       background: var(--card);
       border: 1px solid var(--bd);
@@ -1087,7 +1092,89 @@
       flex-wrap: wrap;
     }
 
-    /* ---------- leitura instantânea de código (orçamento/pedido) ---------- */
+    mark.hl {
+      background: var(--warn-bg);
+      color: inherit;
+      border-radius: 3px;
+      padding: 0 1px;
+      box-shadow: inset 0 -2px 0 rgba(154, 95, 0, 0.35);
+    }
+
+    .cli-result-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 16px 2px 10px;
+      font-size: 13px;
+      color: var(--fg-2);
+    }
+
+    .cli-result-bar b { color: var(--fg); }
+
+    .cli-more {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 16px 0 6px;
+    }
+
+    .cli-hint {
+      margin: 12px 4px 0;
+      font-size: 12.5px;
+      color: var(--mut);
+    }
+
+    .cli-combo { position: relative; }
+    .cli-combo > input[type="text"] { width: 100%; }
+
+    .cli-combo-list {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 60;
+      background: var(--card);
+      border: 1px solid var(--bd-strong);
+      border-radius: var(--r-ctl);
+      box-shadow: 0 14px 34px -8px rgba(20, 22, 26, 0.28);
+      max-height: 300px;
+      overflow: auto;
+      padding: 4px;
+    }
+
+    .cli-combo-item {
+      display: grid;
+      gap: 2px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+    }
+
+    .cli-combo-item b { font-size: 13.5px; }
+    .cli-combo-item small { color: var(--mut); font-size: 12px; }
+
+    .cli-combo-item.act {
+      background: var(--hover);
+      border-left-color: var(--pri);
+    }
+
+    .cli-combo-foot {
+      padding: 7px 10px;
+      font-size: 12px;
+      color: var(--mut);
+    }
+
+    .cli-combo-sel {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--mut);
+      min-height: 16px;
+    }
+
     .code-lookup-box {
       background: var(--sunk);
       border-radius: var(--r-panel);
@@ -1123,7 +1210,6 @@
       color: var(--mut);
     }
 
-    /* ---------- modal ---------- */
     #modal-container {
       position: fixed;
       inset: 0;
@@ -1154,7 +1240,6 @@
       box-shadow: 0 30px 80px -20px rgba(8, 10, 14, 0.55);
     }
 
-    /* tabelas dentro do modal: a descrição pode quebrar linha para caber sem rolagem lateral */
     #modal-container .table-wrapper td {
       white-space: normal;
       padding: 12px 10px;
@@ -1182,7 +1267,6 @@
       margin: 0 0 18px;
     }
 
-    /* ---------- aviso (toast) ---------- */
     #toast-notification {
       position: fixed;
       bottom: 24px;
@@ -1205,7 +1289,6 @@
       animation: toastOut 0.22s ease-in forwards;
     }
 
-    /* ---------- login ---------- */
     .login-bg {
       min-height: 100vh;
       min-height: 100dvh;
@@ -1291,7 +1374,6 @@
     .login-box button {
       padding: 12px 16px;
     }
-
 
     .print-sheet {
       background: #ffffff;
@@ -1604,7 +1686,6 @@
       }
     }
 
-    /* ---------- visualização de impressão: moldura (o papel .print-sheet segue o modelo original) ---------- */
     #print-overlay {
       position: fixed;
       inset: 0;
@@ -1667,12 +1748,6 @@
       animation: sheetIn 0.45s var(--ease-out) backwards;
     }
 
-    /* =====================================================================
-       MOVIMENTO
-       Poucos momentos, todos com propósito: entrada do app (uma vez),
-       troca de página, abrir modal/aviso, indicador do menu e feedback
-       de toque. Só transform e opacity.
-       ===================================================================== */
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -1707,14 +1782,12 @@
       to { opacity: 0; transform: translate(-50%, 10px) scale(0.98); }
     }
 
-    /* os cabos do login são "puxados" um a um */
     @keyframes pull {
       0% { stroke-dashoffset: 1; opacity: 0; }
       3% { opacity: 1; }
       100% { stroke-dashoffset: 0; opacity: 1; }
     }
 
-    /* primeira montagem do app após o login */
     .shell-enter .topbar {
       animation: fadeIn 0.45s ease-out backwards;
     }
@@ -1738,7 +1811,6 @@
       animation: fadeIn 0.5s ease-out 0.45s backwards;
     }
 
-    /* troca de página (a classe só é aplicada ao navegar, nunca ao digitar na busca) */
     .view-enter .page-head {
       animation: rise 0.45s var(--ease-out) backwards;
     }
@@ -1791,7 +1863,6 @@
     .view-enter .table-wrapper tbody tr:nth-child(9) { --n: 8; }
     .view-enter .table-wrapper tbody tr:nth-child(10) { --n: 9; }
 
-    /* ---------- responsivo ---------- */
     @media (max-width: 860px) {
       :root { --topbar-h: 56px; }
 
@@ -1851,7 +1922,6 @@
       #toast-notification { bottom: 16px; }
     }
 
-    /* ---------- preferências de acessibilidade e impressão ---------- */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.001ms !important;
@@ -1874,10 +1944,13 @@
   <div id="modal-container"></div>
   <div id="toast-notification" role="status" aria-live="polite"></div>
   <div id="print-overlay"></div>
-  <!-- Input oculto para importação de planilha Excel/CSV -->
+
   <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
-  <!-- Input oculto para importação da planilha ListaClientes.xlsx -->
+
   <input type="file" id="client-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleClientExcelUpload(event)">
+  <input type="file" id="cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleCostUpload(event)">
+  <input type="file" id="order-cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleOrderCostUpload(event)">
+  <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
 
   <script>
     const getEl = id => document.getElementById(id);
@@ -1899,9 +1972,6 @@
     const todayIso = () => new Date().toISOString().slice(0, 10);
     const escapeHtml = str => String(str ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 
-    // =========================================================================
-    // ÍCONES (SVG inline, traço contínuo) e cabos animados do login
-    // =========================================================================
     const ICON_PATHS = {
       home: '<path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9v10.5a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/>',
       box: '<path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2z"/><path d="m3 8.2 9 5.3 9-5.3"/><path d="M12 13.5V21"/>',
@@ -1933,7 +2003,6 @@
     const icon = (name, cls = '') =>
       `<svg class="ico ${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON_PATHS[name] || ''}</svg>`;
 
-    // Feixe de cabos (cores de isolação VM, PT, AZ, VD, BR, AM) desenhado no login
     const loginCables = () => {
       const colors = ['#d91e36', '#3a3f48', '#2f7fe0', '#2fb36a', '#f1f1ec', '#f5bd0a'];
       return `<svg class="login-cables" viewBox="0 0 800 640" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">${
@@ -1975,12 +2044,15 @@
     let currentUser = null;
     let activePage = 'home';
     let searchQuery = '';
-    let prodStatusFilter = 'ALL'; // 'ALL' | 'SIM' | 'NAO'
+    let prodStatusFilter = 'ALL';
+    let cliStatusFilter = 'ALL';
+    const CLI_PAGE = 50;
+    let cliLimit = CLI_PAGE;
+    let lastCliQuery = '';
     let draftOrder = null;
     let lookedUpProduct = null;
     let selectedGanhosMonth = new Date().toISOString().slice(0, 7);
 
-    // Base completa com os 988 clientes extraídos da planilha ListaClientes.xlsx
     const SAMPLE_CLIENT_LIST_RAW = [
       ["854", "J", "WILAME ROMARIO LIMA DA SILVA PAES", "", "COD-854", "", "", "", "RUA SUICA", "19", "RES DOS NOBRES", "Machado", "MG", "37750-000"], ["748", "J", "APSA AGROPECUARIA SANTO ANTONIO LTDA", "", "18.239.533/0001-96", "", "teodora.oliveira@prolinkcontabil.com.br", "(35) 3851-1336", "BR 265 KM 450. ZONA RURAL", "450 (Fazenda Santo Antonio)", "ZONA RURAL", "Boa Esperança", "MG", "37170-000"],
       ["4", "J", "2 R ENGENHARIA E CONSTRUCAO LTDA", "talisson", "54.801.644/0001-08", "", "", "", "Avenida Lincoln Westin da Silveira", "1231", "Campinho", "Alfenas", "MG", "37131-470"], ["776", "J", "33.037.378 Samuel Silva Rosa", "AS Tecnologia", "00033037378000", "003399998.00-10", "contatoastecnologia@gmail.com", "(35) 99996-3062", "Rua Jose Feliciano Vilela", "315", "centro", "Coqueiral", "MG", "37235-000"],
@@ -2482,9 +2554,6 @@
       email: r[6], tel: r[7], log: r[8], num: r[9], bairro: r[10], cid: r[11], uf: r[12], cep: r[13], ativo: 1
     }));
 
-  
-
-    // Salva no servidor do Render (/api/db) e mantém cópia de segurança local
     const saveData = async () => {
       try {
         localStorage.setItem('marketlandia_db', JSON.stringify(database));
@@ -2512,7 +2581,6 @@
     const isManager = () => currentUser?.role !== 'vendedor';
     const filterByOwnership = list => isManager() ? list : list.filter(item => item.vend === currentUser.id);
 
-    // Verifica se um produto está ativo
     const isProductActive = prod => {
       if (!prod) return false;
       if (prod.ativo === 0 || prod.ativo === false) return false;
@@ -2549,7 +2617,6 @@
       toast.textContent = message;
       toast.classList.remove('leaving');
       if (toast.style.display === 'block') {
-        // aviso já visível: reinicia a animação de entrada
         toast.style.animation = 'none';
         void toast.offsetWidth;
         toast.style.animation = '';
@@ -2570,7 +2637,6 @@
       const wasClosed = box.style.display !== 'flex';
       box.innerHTML = `<div>${htmlContent}</div>`;
       box.style.display = 'flex';
-      // anima só a abertura; re-renderizações com o modal aberto não piscam
       if (wasClosed) {
         box.classList.remove('is-opening');
         void box.offsetWidth;
@@ -2593,6 +2659,123 @@
       </div>
     `;
 
+    const normText = str => String(str ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const onlyDigits = str => String(str ?? '').replace(/\D/g, '');
+    const clientSearchTerms = query => normText(query).split(/\s+/).filter(Boolean);
+    const isNumericTerm = term => /^[\d.\-\/()+]+$/.test(term) && /\d/.test(term);
+
+    function scoreField(field, term, wStart, wWord, wIn) {
+      if (!field) return 0;
+      if (field.startsWith(term)) return wStart;
+      if ((' ' + field).includes(' ' + term)) return wWord;
+      return field.includes(term) ? wIn : 0;
+    }
+
+    function scoreClientTerm(f, term) {
+      let best = Math.max(
+        scoreField(f.nome, term, 100, 70, 40),
+        scoreField(f.fant, term, 90, 60, 35),
+        scoreField(f.docRaw, term, 80, 50, 50),
+        scoreField(f.email, term, 30, 25, 20),
+        scoreField(f.cid, term, 35, 30, 25),
+        scoreField(f.bairro, term, 25, 22, 20),
+        scoreField(f.log, term, 22, 20, 18),
+        scoreField(f.vend, term, 22, 20, 18),
+        f.uf === term ? 15 : 0,
+        f.cod === term ? 120 : (f.cod.startsWith(term) ? 80 : 0)
+      );
+      if (isNumericTerm(term)) {
+        const d = onlyDigits(term);
+        if (f.cod === d) best = Math.max(best, 120);
+        else if (f.cod.startsWith(d)) best = Math.max(best, 80);
+        if (f.docD.startsWith(d)) best = Math.max(best, 90);
+        else if (f.docD.includes(d)) best = Math.max(best, 55);
+        if (f.tel.startsWith(d)) best = Math.max(best, 50);
+        else if (f.tel.includes(d)) best = Math.max(best, 45);
+        if (f.cep.includes(d)) best = Math.max(best, 20);
+        if (f.ie.includes(d)) best = Math.max(best, 25);
+      }
+      return best;
+    }
+
+    function searchClients(list, query) {
+      const terms = clientSearchTerms(query);
+      const sortByName = (a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', { sensitivity: 'base' });
+      if (!terms.length) return list.slice().sort(sortByName);
+
+      const sellerName = c => (database.users.find(u => u.id === c.vend) || {}).nome;
+      const phrase = terms.join(' ');
+      const scored = [];
+      for (const c of list) {
+        const f = {
+          nome: normText(c.nome), fant: normText(c.fantasia), cod: normText(c.codSis),
+          docRaw: normText(c.doc), docD: onlyDigits(c.doc), ie: onlyDigits(c.ie),
+          tel: onlyDigits(c.tel), email: normText(c.email), cep: onlyDigits(c.cep),
+          cid: normText(c.cid), uf: normText(c.uf), bairro: normText(c.bairro),
+          log: normText(c.log), vend: normText(c.vendNome || sellerName(c))
+        };
+        let total = 0;
+        let ok = true;
+        for (const t of terms) {
+          const sc = scoreClientTerm(f, t);
+          if (!sc) { ok = false; break; }
+          total += sc;
+        }
+        if (!ok) continue;
+        if (terms.length > 1 && f.nome.includes(phrase)) total += 40;
+        scored.push({ c, total });
+      }
+      scored.sort((a, b) => (b.total - a.total) || sortByName(a.c, b.c));
+      return scored.map(x => x.c);
+    }
+
+    function hlText(text, terms) {
+      const src = String(text ?? '');
+      if (!src || !terms || !terms.length) return escapeHtml(src);
+      let norm = '';
+      const map = [];
+      for (let i = 0; i < src.length; i++) {
+        const n = src[i].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        for (const ch of n) { norm += ch; map.push(i); }
+      }
+      const ranges = [];
+      for (const t of terms) {
+        if (!t) continue;
+        let from = 0, idx;
+        while ((idx = norm.indexOf(t, from)) !== -1) {
+          ranges.push([map[idx], map[idx + t.length - 1] + 1]);
+          from = idx + t.length;
+        }
+      }
+      if (!ranges.length) return escapeHtml(src);
+      ranges.sort((a, b) => a[0] - b[0]);
+      const merged = [ranges[0].slice()];
+      for (let i = 1; i < ranges.length; i++) {
+        const last = merged[merged.length - 1];
+        if (ranges[i][0] <= last[1]) last[1] = Math.max(last[1], ranges[i][1]);
+        else merged.push(ranges[i].slice());
+      }
+      let out = '', pos = 0;
+      for (const [a, b] of merged) {
+        out += escapeHtml(src.slice(pos, a)) + '<mark class="hl">' + escapeHtml(src.slice(a, b)) + '</mark>';
+        pos = b;
+      }
+      return out + escapeHtml(src.slice(pos));
+    }
+
+    function setCliStatus(value) {
+      cliStatusFilter = value;
+      cliLimit = CLI_PAGE;
+      refreshView();
+    }
+
+    function clearCliSearch() {
+      searchQuery = '';
+      cliStatusFilter = 'ALL';
+      cliLimit = CLI_PAGE;
+      refreshView();
+    }
+
     const renderHeader = (category, title, addCallback) => `
       <div class="page-head">
         <div>
@@ -2603,9 +2786,9 @@
       </div>
       <div class="action-panel">
         <div class="filter-box">
-          <label>Localizar por Código (ex: VM250100), Descrição, Cliente ou Status</label>
+          <label>${activePage === 'cli' ? 'Localizar cliente por nome, fantasia, CNPJ/CPF, código, telefone, cidade ou vendedor' : 'Localizar por Código (ex: VM250100), Descrição, Cliente ou Status'}</label>
           <div class="filter-input-wrap">
-            <input placeholder="Digite o código (ex: VM250100) ou nome do cabo/cliente…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
+            <input placeholder="${activePage === 'cli' ? 'Ex.: joao silva · 12.345.678 · (35) 3555 · alfenas' : 'Digite o código (ex: VM250100) ou nome do cabo/cliente…'}" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()" onkeydown="if(event.key==='Escape'&&this.value){searchQuery='';refreshView()}" ${activePage === 'cli' ? 'autocomplete="off" aria-label="Buscar cliente"' : ''}>
           </div>
           <div class="filter-tags">
             <span class="tag-active">MÓDULO: ${title.toUpperCase()} ${icon('x', 'ico-sm')}</span>
@@ -2615,13 +2798,18 @@
               <button class="tag-btn ${prodStatusFilter === 'SIM' ? 'on' : ''}" onclick="prodStatusFilter='SIM';refreshView()">Ativo: Sim (${database.prod.filter(isProductActive).length})</button>
               ${database.prod.some(p => !isProductActive(p)) ? `<button class="tag-btn ${prodStatusFilter === 'NAO' ? 'on' : ''}" onclick="prodStatusFilter='NAO';refreshView()">Inativos (${database.prod.filter(p => !isProductActive(p)).length})</button>` : ''}
             ` : ''}
+            ${activePage === 'cli' ? `
+              <button class="tag-btn ${cliStatusFilter === 'ALL' ? 'on' : ''}" onclick="setCliStatus('ALL')">Todos (${database.cli.length})</button>
+              <button class="tag-btn ${cliStatusFilter === 'SIM' ? 'on' : ''}" onclick="setCliStatus('SIM')">Ativos (${database.cli.filter(c => c.ativo).length})</button>
+              ${database.cli.some(c => !c.ativo) ? `<button class="tag-btn ${cliStatusFilter === 'NAO' ? 'on' : ''}" onclick="setCliStatus('NAO')">Inativos (${database.cli.filter(c => !c.ativo).length})</button>` : ''}
+            ` : ''}
           </div>
         </div>
         <div class="tool-grid">
           <button class="tool-btn" onclick="refreshView()" title="Atualizar lista" aria-label="Atualizar lista">${icon('refresh')}</button>
           <button class="tool-btn" onclick="window.print()" title="Imprimir tela" aria-label="Imprimir tela">${icon('printer')}</button>
           <button class="tool-btn" onclick="saveData();showToast('Sincronizado com o banco de dados')" title="Sincronizar" aria-label="Sincronizar">${icon('sync')}</button>
-          <button class="tool-btn" onclick="searchQuery='';prodStatusFilter='ALL';refreshView()" title="Limpar busca" aria-label="Limpar busca">${icon('clear')}</button>
+          <button class="tool-btn" onclick="searchQuery='';prodStatusFilter='ALL';cliStatusFilter='ALL';cliLimit=CLI_PAGE;refreshView()" title="Limpar busca" aria-label="Limpar busca">${icon('clear')}</button>
         </div>
         ${addCallback ? `
           <button class="add-big-btn" onclick="${addCallback}">
@@ -2691,6 +2879,7 @@
     const APP_NAVIGATION = [
       ['home', 'Início', icon('home'), false],
       ['prod', 'Catálogo', icon('box'), false],
+      ['precos', 'Preços por Categoria', icon('dollar'), true],
       ['orc', 'Orçamentos', icon('tag'), false],
       ['ped', 'Vendas / Pedidos', icon('cart'), false],
       ['cli', 'Clientes', icon('users'), false],
@@ -2739,12 +2928,91 @@
       renderApp();
     }
 
+    function avatarInner(user, initials) {
+      if (user && typeof user.foto === 'string' && user.foto.startsWith('data:image/')) {
+        return `<img src="${escapeHtml(user.foto)}" alt="">`;
+      }
+      return escapeHtml(initials);
+    }
+
+    function openPhotoModal() {
+      if (!currentUser) return;
+      const initials = currentUser.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+      openModal(`
+        <h3>Foto de perfil</h3>
+        <div style="display:flex;align-items:center;gap:18px;margin:14px 0">
+          <div class="avatar avatar-lg">${avatarInner(currentUser, initials)}</div>
+          <p class="mut" style="font-size:12px;margin:0">Escolha uma imagem (JPG, PNG ou WEBP). Ela é recortada automaticamente em formato quadrado.</p>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+          <button onclick="triggerPhotoUpload()">${icon('download')} Escolher foto</button>
+          ${currentUser.foto ? `<button class="danger-outline" onclick="removeProfilePhoto()">${icon('trash')} Remover foto</button>` : ''}
+          <button class="secondary" onclick="closeModal()">Fechar</button>
+        </div>
+      `);
+    }
+
+    function triggerPhotoUpload() {
+      const input = getEl('photo-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    function handlePhotoUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file || !currentUser) return;
+      if (!file.type.startsWith('image/')) return showToast('Escolha um arquivo de imagem.');
+      if (file.size > 15 * 1024 * 1024) return showToast('A imagem é muito grande (máximo 15 MB).');
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = async function() {
+          const size = 160;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          const side = Math.min(img.width, img.height);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.86);
+          const user = database.users.find(u => u.id === currentUser.id) || currentUser;
+          user.foto = dataUrl;
+          currentUser.foto = dataUrl;
+          addAuditLog('Foto de perfil alterada');
+          await saveData();
+          closeModal();
+          renderApp();
+          showToast('Foto de perfil atualizada!');
+        };
+        img.onerror = () => showToast('Não foi possível ler essa imagem.');
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function removeProfilePhoto() {
+      if (!currentUser) return;
+      const user = database.users.find(u => u.id === currentUser.id) || currentUser;
+      delete user.foto;
+      delete currentUser.foto;
+      addAuditLog('Foto de perfil removida');
+      await saveData();
+      closeModal();
+      renderApp();
+      showToast('Foto de perfil removida.');
+    }
+
     function navigateTo(pageKey) {
       activePage = pageKey;
       searchQuery = '';
+      cliStatusFilter = 'ALL';
+      cliLimit = CLI_PAGE;
 
-      // Com o app já montado, troca só o conteúdo e mantém topo + menu no lugar
-      // (é isso que permite o indicador do menu deslizar entre os itens).
       if (currentUser && getEl('main-content')) {
         const navItem = APP_NAVIGATION.find(item => item[0] === activePage);
         if (!PAGES[activePage] || (navItem?.[3] && !isAdmin())) activePage = 'home';
@@ -2757,9 +3025,8 @@
       renderApp();
     }
 
-    // controle de animações de entrada (só apresentação)
-    let shellEntered = false;   // topo + menu já entraram nesta sessão?
-    let viewKey = null;         // página cujo conteúdo já foi animado
+    let shellEntered = false;
+    let viewKey = null;
 
     function renderApp() {
       const container = getEl('app');
@@ -2782,8 +3049,6 @@
                 <small class="mut" style="font-weight:700">ACESSO</small>
               </div>
               <h2 class="login-title">Bem-vindo de volta</h2>
-
-
 
               <label>E-mail ou Nome de Usuário</label>
               <input id="em" type="text" placeholder="Ex: admin@cabolandia.com.br ou thiago@cabolandia.com.br">
@@ -2830,7 +3095,7 @@
               <input placeholder="Procure por código (ex: VM250100), cabo, cliente ou pedido…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
             </div>
             <div class="top-user">
-              <div class="avatar">${escapeHtml(initials)}</div>
+              <div class="avatar" role="button" tabindex="0" title="Alterar foto de perfil" aria-label="Alterar foto de perfil" onclick="openPhotoModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPhotoModal()}">${avatarInner(currentUser, initials)}</div>
               <div class="user-info">
                 <small>${escapeHtml(currentUser.role)}</small>
                 <b>${escapeHtml(currentUser.nome)}</b>
@@ -2936,7 +3201,6 @@
       document.querySelectorAll('nav a').forEach(a => {
         a.classList.toggle('on', a.id === `nav_${activePage}`);
       });
-      // Atualiza contador do topo se existir
       const topCatalogPill = document.querySelector('.top-pills .pill-item:last-child');
       if (topCatalogPill) {
         topCatalogPill.innerHTML = `${icon('box')} Catálogo (${database.prod.length})`;
@@ -2944,12 +3208,10 @@
 
       const main = getEl('main-content');
 
-      // O campo de busca da própria página é recriado a cada tecla; devolve o foco e o cursor
       const focused = document.activeElement;
       const keepFocus = focused && main.contains(focused) && focused.matches('.filter-input-wrap input');
       const caret = keepFocus ? focused.selectionStart : null;
 
-      // Anima somente quando a página muda (nunca ao digitar, filtrar ou salvar)
       const entering = viewKey !== activePage;
       viewKey = activePage;
       main.classList.toggle('view-enter', entering);
@@ -2967,10 +3229,453 @@
       if (entering) animateKpis(main);
     }
 
-    // =========================================================================
-    // IMPORTAÇÃO E PARSE DO MODELO DE PLANILHA (Produtos.xlsx)
-    // Reconhece produtos não ativos e NÃO os coloca no sistema
-    // =========================================================================
+    let priceTool = { cat: '', bitola: '', un: '', texto: '', modo: 'fixo', valor: '' };
+    let lastPriceChange = null;
+    let pricePending = null;
+    const PRICE_PREVIEW_LIMIT = 200;
+
+    const PRICE_MODES = {
+      fixo:   { label: 'Preço único (igual para todos)',      campo: 'Novo preço de venda (R$)',        ph: 'Ex: 2,90' },
+      pct:    { label: 'Reajuste em % (negativo reduz)',      campo: 'Percentual (%)',                  ph: 'Ex: 5  ou  -3' },
+      soma:   { label: 'Somar / subtrair um valor em R$',     campo: 'Valor a somar (R$)',              ph: 'Ex: 0,20  ou  -0,10' },
+      margem: { label: 'Margem sobre o custo (%)',            campo: 'Margem desejada sobre a venda (%)', ph: 'Ex: 35' }
+    };
+
+    const ptCategory = p => String(p.cat || '').trim() || 'SEM CATEGORIA';
+    const ptNorm = s => String(s || '').toUpperCase().replace(/,/g, '.');
+
+    function ptBitola(p) {
+      const m = String(p.nome || '').match(/(\d+(?:[.,]\d+)?)\s*MM/i);
+      if (!m) return '';
+      const n = parseFloat(m[1].replace(',', '.'));
+      if (!isFinite(n) || n <= 0) return '';
+      return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+    }
+
+    const ptGroups = () => (Array.isArray(database.grupos) ? database.grupos : (database.grupos = []));
+    const ptGroupCount = g => g.ids.filter(id => database.prod.some(p => p.id === id)).length;
+    function ptInCat(p, cat) {
+      if (!cat) return true;
+      if (cat.startsWith('grp:')) {
+        const g = ptGroups().find(x => x.id === cat.slice(4));
+        return !!g && g.ids.includes(p.id);
+      }
+      return ptCategory(p) === cat;
+    }
+
+    const ptHasScope = () => !!(priceTool.cat || priceTool.bitola || String(priceTool.texto).trim());
+
+    function ptSelection() {
+      const t = ptNorm(priceTool.texto).trim();
+      return database.prod.filter(p => {
+        if (!ptInCat(p, priceTool.cat)) return false;
+        if (priceTool.bitola && ptBitola(p) !== priceTool.bitola) return false;
+        if (priceTool.un && String(p.un || '').toUpperCase() !== priceTool.un) return false;
+        if (t && !(ptNorm(p.nome) + ' ' + ptNorm(p.sku)).includes(t)) return false;
+        return true;
+      });
+    }
+
+    function ptNewPrice(p, modo, v) {
+      const atual = Number(p.preco) || 0;
+      const custo = Number(p.custo) || 0;
+      let n = NaN;
+      if (modo === 'fixo') n = v;
+      else if (modo === 'pct') n = atual * (1 + v / 100);
+      else if (modo === 'soma') n = atual + v;
+      else if (modo === 'margem') n = (v >= 0 && v < 100 && custo > 0) ? custo / (1 - v / 100) : NaN;
+      return Math.round(n * 100) / 100;
+    }
+
+    function ptCompute() {
+      const sel = ptSelection();
+      const raw = String(priceTool.valor ?? '').trim();
+      const v = raw === '' ? NaN : parseNumberPtBr(raw);
+      const hasValue = Number.isFinite(v) && (priceTool.modo !== 'fixo' || v > 0);
+      const rows = sel.map(p => {
+        const atual = Number(p.preco) || 0;
+        const custo = Number(p.custo) || 0;
+        let novo = NaN, status = 'sem-valor';
+        if (hasValue) {
+          novo = ptNewPrice(p, priceTool.modo, v);
+          if (!Number.isFinite(novo) || novo <= 0) status = 'invalido';
+          else if (novo === atual) status = 'igual';
+          else if (custo > 0 && novo < custo) status = 'abaixo';
+          else status = 'ok';
+        }
+        return { p, atual, custo, novo, status };
+      });
+      return {
+        sel, rows, v, hasValue,
+        changes: rows.filter(r => r.status === 'ok' || r.status === 'abaixo'),
+        below: rows.filter(r => r.status === 'abaixo').length,
+        invalid: rows.filter(r => r.status === 'invalido').length,
+        units: [...new Set(sel.map(p => String(p.un || '').toUpperCase()).filter(Boolean))]
+      };
+    }
+
+    function ptScopeParts() {
+      const parts = [];
+      if (priceTool.cat) {
+        const g = priceTool.cat.startsWith('grp:') ? ptGroups().find(x => x.id === priceTool.cat.slice(4)) : null;
+        parts.push(g ? g.nome : priceTool.cat);
+      }
+      if (priceTool.bitola) parts.push(`${priceTool.bitola} mm`);
+      if (priceTool.un) parts.push(`unidade ${priceTool.un}`);
+      if (String(priceTool.texto).trim()) parts.push(`nome contém "${String(priceTool.texto).trim()}"`);
+      return parts;
+    }
+
+    function ptModeText(c) {
+      const num = String(c.v).replace('.', ',');
+      if (priceTool.modo === 'fixo') return `novo preço de ${formatCurrency(c.v)} para todos`;
+      if (priceTool.modo === 'pct') return `reajuste de ${c.v > 0 ? '+' : ''}${num}%`;
+      if (priceTool.modo === 'soma') return `${c.v >= 0 ? 'somar' : 'subtrair'} ${formatCurrency(Math.abs(c.v))} do preço atual`;
+      return `preço recalculado para margem de ${num}% sobre o custo`;
+    }
+
+    const ptNote = (kind, text) =>
+      `<div class="card" style="margin-bottom:12px;padding:12px 16px;border-left:4px solid var(--${kind});font-size:13px">${text}</div>`;
+
+    function ptRoot() {
+      if (!database.prod.length) {
+        return `<div class="card"><p class="mut" style="margin:0">O catálogo está vazio. Importe a planilha de produtos primeiro (aba Catálogo).</p></div>`;
+      }
+      if (priceTool.cat.startsWith('grp:') && !ptGroups().some(g => g.id === priceTool.cat.slice(4))) priceTool.cat = '';
+      const catCount = {};
+      database.prod.forEach(p => { const k = ptCategory(p); catCount[k] = (catCount[k] || 0) + 1; });
+      const catNames = Object.keys(catCount).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      const bitCount = {};
+      database.prod.forEach(p => {
+        if (!ptInCat(p, priceTool.cat)) return;
+        const b = ptBitola(p);
+        if (b) bitCount[b] = (bitCount[b] || 0) + 1;
+      });
+      const bitNames = Object.keys(bitCount).sort((a, b) => parseFloat(a.replace(',', '.')) - parseFloat(b.replace(',', '.')));
+      const unitNames = [...new Set(database.prod.map(p => String(p.un || '').toUpperCase()).filter(Boolean))].sort();
+
+      const opt = (val, label, cur) => `<option value="${escapeHtml(val)}"${val === cur ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+      const mode = PRICE_MODES[priceTool.modo];
+
+      return `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-bottom:18px">
+          <div class="card form-layout">
+            <h3 class="panel-title">1 · Quais produtos?</h3>
+            <label>Categoria</label>
+            <select onchange="ptSet('cat', this.value)">
+              ${opt('', `Todas as categorias (${database.prod.length})`, priceTool.cat)}
+              ${ptGroups().length ? `<optgroup label="Minhas categorias">${ptGroups().map(g => opt('grp:' + g.id, `${g.nome} (${ptGroupCount(g)})`, priceTool.cat)).join('')}</optgroup>` : ''}
+              <optgroup label="Categorias da planilha">${catNames.map(c => opt(c, `${c} (${catCount[c]})`, priceTool.cat)).join('')}</optgroup>
+            </select>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div>
+                <label>Bitola (mm)</label>
+                <select onchange="ptSet('bitola', this.value)">
+                  ${opt('', 'Todas as bitolas', priceTool.bitola)}
+                  ${bitNames.map(b => opt(b, `${b} mm (${bitCount[b]})`, priceTool.bitola)).join('')}
+                </select>
+              </div>
+              <div>
+                <label>Unidade</label>
+                <select onchange="ptSet('un', this.value)">
+                  ${opt('', 'Todas', priceTool.un)}
+                  ${unitNames.map(u => opt(u, u, priceTool.un)).join('')}
+                </select>
+              </div>
+            </div>
+            <label>Nome ou código contém (opcional)</label>
+            <input placeholder="Ex: PRETO, AZUL, VM250" value="${escapeHtml(priceTool.texto)}" oninput="ptInput('texto', this.value)">
+            <p class="mut" style="margin:10px 0 0;font-size:12px">A bitola é lida do nome do produto (ex.: “CABO FLEXÍVEL 1,5MM”). Metro e rolo têm preços diferentes — use o filtro de unidade.</p>
+          </div>
+
+          <div class="card form-layout">
+            <h3 class="panel-title">2 · Qual preço?</h3>
+            <label>Como alterar</label>
+            <select onchange="ptSet('modo', this.value)">
+              ${Object.keys(PRICE_MODES).map(k => opt(k, PRICE_MODES[k].label, priceTool.modo)).join('')}
+            </select>
+            <label>${mode.campo}</label>
+            <input inputmode="decimal" placeholder="${mode.ph}" value="${escapeHtml(priceTool.valor)}" oninput="ptInput('valor', this.value)">
+            <p class="mut" style="margin:10px 0 0;font-size:12px">Orçamentos e pedidos já lançados mantêm o preço antigo. Só os próximos usam o novo.</p>
+          </div>
+
+          <div class="card form-layout">
+            <h3 class="panel-title">Minhas categorias</h3>
+            <p class="mut" style="margin:0 0 12px;font-size:12px">Monte uma categoria escolhendo os produtos que quiser, de qualquer categoria da planilha. Ela fica salva e não é apagada ao importar a planilha de novo.</p>
+            ${ptGroups().length ? ptGroups().map(g => `
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--bd)">
+                <div style="flex:1;min-width:140px"><b>${escapeHtml(g.nome)}</b><br><small class="mut">${ptGroupCount(g)} produto(s)</small></div>
+                <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptSet('cat','grp:${g.id}')">Usar nos preços</button>
+                <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptOpenGroup('${g.id}')">${icon('edit')} Editar</button>
+                <button class="danger-outline" style="padding:5px 10px;font-size:12px" onclick="ptGroupDeleteConfirm('${g.id}')">${icon('trash')} Excluir</button>
+              </div>`).join('') : '<p class="mut" style="font-size:13px">Nenhuma categoria criada ainda.</p>'}
+            <button style="margin-top:12px" onclick="ptOpenGroup()">${icon('tag')} Criar nova categoria</button>
+          </div>
+        </div>
+        <div id="pt_preview">${ptPreview()}</div>`;
+    }
+
+    function ptPreview() {
+      const c = ptCompute();
+      const needScope = priceTool.modo === 'fixo' && !ptHasScope();
+      const canApply = c.hasValue && c.changes.length > 0 && !needScope;
+
+      let notes = '';
+      if (needScope) notes += ptNote('warn', 'Para definir um preço único, escolha ao menos uma categoria, bitola ou parte do nome. Assim você não muda o catálogo inteiro sem querer.');
+      if (c.units.length > 1) notes += ptNote('warn', `Esta seleção mistura unidades (${escapeHtml(c.units.join(', '))}). Metro e rolo costumam ter preços diferentes: use o filtro “Unidade” para alterar só uma delas.`);
+      if (c.below) notes += ptNote('bad', `${c.below} produto(s) ficariam com preço abaixo do custo.`);
+      if (c.invalid) notes += ptNote('warn', `${c.invalid} produto(s) não aceitam esse valor (preço zerado/negativo, ou sem custo para calcular a margem) e serão ignorados.`);
+
+      const statusCell = r => ({
+        ok: '<span class="dot-ok">Alterar</span>',
+        abaixo: '<span class="dot-bad">Abaixo do custo</span>',
+        igual: '<span class="mut">Sem mudança</span>',
+        invalido: '<span class="dot-warn">Ignorado</span>',
+        'sem-valor': '<span class="mut">—</span>'
+      })[r.status];
+
+      const shown = c.rows.slice(0, PRICE_PREVIEW_LIMIT);
+      const table = renderTable(
+        ['CÓDIGO', 'PRODUTO', 'BITOLA', 'UN.', 'CUSTO', 'PREÇO ATUAL', 'NOVO PREÇO', 'VARIAÇÃO', 'SITUAÇÃO'],
+        shown.map(r => {
+          const okNovo = Number.isFinite(r.novo) && r.status !== 'invalido';
+          const diff = okNovo && r.atual > 0 ? (r.novo / r.atual - 1) * 100 : null;
+          return [
+            `<span class="sku-pill">${escapeHtml(r.p.sku)}</span>`,
+            `<b>${escapeHtml(String(r.p.nome || '').toUpperCase())}</b>${isProductActive(r.p) ? '' : '<br><small class="mut">inativo</small>'}`,
+            ptBitola(r.p) ? `${ptBitola(r.p)} mm` : '—',
+            escapeHtml(r.p.un || ''),
+            r.custo > 0 ? formatCurrency(r.custo) : '—',
+            formatCurrency(r.atual),
+            okNovo ? `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(r.novo)}</b>` : '—',
+            diff === null ? '—' : `${diff > 0 ? '+' : ''}${diff.toFixed(1).replace('.', ',')}%`,
+            statusCell(r)
+          ];
+        }),
+        true
+      );
+
+      const undo = lastPriceChange
+        ? `<button class="secondary" onclick="ptUndo()">${icon('refresh')} Desfazer última alteração (${lastPriceChange.items.length} produtos)</button>`
+        : '';
+
+      return `
+        ${notes}
+        <div class="cards">
+          ${renderCard('Produtos na seleção', c.sel.length)}
+          ${renderCard('Serão alterados', c.hasValue ? c.changes.length : '—')}
+          ${renderCard('Abaixo do custo', c.hasValue ? c.below : '—', c.below ? 'bad' : '')}
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 18px">
+          <button onclick="ptConfirm()" ${canApply ? '' : 'disabled style="opacity:.45;cursor:not-allowed"'}>${icon('save')} Aplicar novo preço em ${c.changes.length} produto(s)</button>
+          ${undo}
+        </div>
+        ${table}
+        ${c.sel.length > PRICE_PREVIEW_LIMIT ? `<p class="mut" style="font-size:12px;margin-top:-12px">Mostrando ${PRICE_PREVIEW_LIMIT} de ${c.sel.length} produtos. A alteração vale para todos os da seleção.</p>` : ''}`;
+    }
+
+    function ptSet(key, val) {
+      priceTool[key] = val;
+      if (key === 'cat' && priceTool.bitola) {
+        const stillExists = database.prod.some(p => ptInCat(p, val) && ptBitola(p) === priceTool.bitola);
+        if (!stillExists) priceTool.bitola = '';
+      }
+      const root = getEl('pt_root');
+      if (root) root.innerHTML = ptRoot();
+    }
+
+    function ptInput(key, val) {
+      priceTool[key] = val;
+      const box = getEl('pt_preview');
+      if (box) box.innerHTML = ptPreview();
+    }
+
+    function ptConfirm() {
+      if (!isManager()) return;
+      const c = ptCompute();
+      if (!c.hasValue || !c.changes.length) return showToast('Informe um valor válido para ver quais produtos serão alterados.');
+      if (priceTool.modo === 'fixo' && !ptHasScope()) return showToast('Escolha uma categoria, bitola ou parte do nome antes de definir um preço único.');
+
+      const scope = ptScopeParts().join(' · ') || 'Todo o catálogo';
+      pricePending = {
+        items: c.changes.map(r => ({ id: r.p.id, para: r.novo })),
+        desc: `${scope} — ${ptModeText(c)}`
+      };
+      openModal(`
+        <h3>Confirmar alteração de preços</h3>
+        <p style="font-size:14px;line-height:1.6">
+          <b>${escapeHtml(scope)}</b><br>
+          ${escapeHtml(ptModeText(c))}<br>
+          Serão alterados <b>${c.changes.length} produto(s)</b>.
+        </p>
+        ${c.below ? `<p class="bad" style="font-size:13px"><b>Atenção:</b> ${c.below} produto(s) ficarão com preço abaixo do custo.</p>` : ''}
+        <p class="mut" style="font-size:12px">Orçamentos e pedidos já lançados mantêm o preço antigo. Logo depois você poderá desfazer.</p>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button onclick="ptApply()">${icon('save')} Sim, aplicar novos preços</button>
+          <button class="secondary" onclick="pricePending=null;closeModal()">Cancelar</button>
+        </div>
+      `);
+    }
+
+    async function ptApply() {
+      if (!isManager() || !pricePending) return;
+      const { items, desc } = pricePending;
+      const snapshot = [];
+      items.forEach(it => {
+        const p = database.prod.find(x => x.id === it.id);
+        if (!p) return;
+        snapshot.push({ id: p.id, de: Number(p.preco) || 0 });
+        p.preco = it.para;
+      });
+      lastPriceChange = { desc, items: snapshot, t: Date.now() };
+      pricePending = null;
+      priceTool.valor = '';
+      addAuditLog(`Preços em lote: ${desc} (${snapshot.length} produtos alterados)`);
+      await saveData();
+      closeModal();
+      refreshView();
+      showToast(`Preços atualizados em ${snapshot.length} produto(s).`);
+    }
+
+    async function ptUndo() {
+      if (!isManager() || !lastPriceChange) return;
+      let restored = 0;
+      lastPriceChange.items.forEach(it => {
+        const p = database.prod.find(x => x.id === it.id);
+        if (p) { p.preco = it.de; restored++; }
+      });
+      addAuditLog(`Preços em lote desfeitos: ${lastPriceChange.desc} (${restored} produtos restaurados)`);
+      lastPriceChange = null;
+      await saveData();
+      refreshView();
+      showToast(`Alteração desfeita: ${restored} produto(s) voltaram ao preço anterior.`);
+    }
+
+    let groupDraft = null;
+
+    function ptOpenGroup(id = '') {
+      if (!isManager()) return;
+      const g = id ? ptGroups().find(x => x.id === id) : null;
+      groupDraft = { id: g ? g.id : '', nome: g ? g.nome : '', ids: new Set(g ? g.ids : []), q: '', cat: '' };
+      const cats = [...new Set(database.prod.map(ptCategory))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      openModal(`
+        <h3>${g ? 'Editar categoria' : 'Nova categoria'}</h3>
+        <div class="form-layout">
+          <label>Nome da categoria *</label>
+          <input id="gd_nome" placeholder="Ex: Cabos 1,50 mm" value="${escapeHtml(groupDraft.nome)}" oninput="groupDraft.nome=this.value">
+          <label>Escolha os produtos</label>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
+            <input id="gd_q" placeholder="Buscar por nome ou código (ex: 1,5 ou PRETO)" oninput="ptGroupFilter()">
+            <select id="gd_cat" onchange="ptGroupFilter()">
+              <option value="">Todas as categorias</option>
+              ${cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0">
+            <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptGroupMark(true)">Marcar todos os filtrados</button>
+            <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptGroupMark(false)">Desmarcar filtrados</button>
+            <span id="gd_count" class="mut" style="font-size:13px"></span>
+          </div>
+          <div id="gd_list" style="max-height:320px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:4px 8px"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button onclick="ptGroupSave()">${icon('save')} Salvar categoria</button>
+          <button class="secondary" onclick="groupDraft=null;closeModal()">Cancelar</button>
+        </div>
+      `);
+      ptGroupFilter();
+    }
+
+    function ptGroupFiltered() {
+      const t = ptNorm(groupDraft.q).trim();
+      return database.prod.filter(p => {
+        if (groupDraft.cat && ptCategory(p) !== groupDraft.cat) return false;
+        return !t || (ptNorm(p.nome) + ' ' + ptNorm(p.sku)).includes(t);
+      });
+    }
+
+    function ptGroupCountLabel() {
+      const el = getEl('gd_count');
+      if (el) el.textContent = `${groupDraft.ids.size} produto(s) marcado(s)`;
+    }
+
+    function ptGroupFilter() {
+      if (!groupDraft) return;
+      groupDraft.q = getVal('gd_q');
+      groupDraft.cat = getVal('gd_cat');
+      const list = ptGroupFiltered();
+      const shown = list.slice(0, 300);
+      getEl('gd_list').innerHTML = shown.length
+        ? shown.map(p => `
+            <label style="display:flex;gap:8px;align-items:center;padding:5px 2px;cursor:pointer;font-size:13px">
+              <input type="checkbox" style="width:16px;height:16px;flex:none" ${groupDraft.ids.has(p.id) ? 'checked' : ''} onchange="ptGroupToggle('${escapeHtml(p.id)}', this.checked)">
+              <span class="sku-pill">${escapeHtml(p.sku)}</span>
+              <span style="flex:1">${escapeHtml(String(p.nome || '').toUpperCase())}</span>
+              <small class="mut">${escapeHtml(p.un || '')} · ${formatCurrency(p.preco)}</small>
+            </label>`).join('') +
+          (list.length > shown.length ? `<p class="mut" style="font-size:12px;margin:6px 0">Mostrando ${shown.length} de ${list.length}. Refine a busca ou use “Marcar todos os filtrados” para marcar todos os ${list.length}.</p>` : '')
+        : '<p class="mut" style="font-size:13px;margin:8px 0">Nenhum produto encontrado.</p>';
+      ptGroupCountLabel();
+    }
+
+    function ptGroupToggle(id, on) {
+      if (!groupDraft) return;
+      if (on) groupDraft.ids.add(id); else groupDraft.ids.delete(id);
+      ptGroupCountLabel();
+    }
+
+    function ptGroupMark(on) {
+      if (!groupDraft) return;
+      ptGroupFiltered().forEach(p => { if (on) groupDraft.ids.add(p.id); else groupDraft.ids.delete(p.id); });
+      ptGroupFilter();
+    }
+
+    async function ptGroupSave() {
+      if (!isManager() || !groupDraft) return;
+      const nome = String(groupDraft.nome || '').trim();
+      if (!nome) return showToast('Dê um nome para a categoria.');
+      if (!groupDraft.ids.size) return showToast('Marque ao menos um produto.');
+      if (ptGroups().some(g => g.id !== groupDraft.id && g.nome.trim().toLowerCase() === nome.toLowerCase())) {
+        return showToast('Já existe uma categoria com esse nome.');
+      }
+      const ids = [...groupDraft.ids];
+      const existing = groupDraft.id ? ptGroups().find(g => g.id === groupDraft.id) : null;
+      if (existing) { existing.nome = nome; existing.ids = ids; }
+      else ptGroups().push({ id: nextId(), nome, ids });
+      addAuditLog(`Categoria "${nome}" ${existing ? 'atualizada' : 'criada'} (${ids.length} produtos)`);
+      groupDraft = null;
+      await saveData();
+      closeModal();
+      refreshView();
+      showToast(`Categoria "${nome}" salva com ${ids.length} produto(s).`);
+    }
+
+    function ptGroupDeleteConfirm(id) {
+      const g = ptGroups().find(x => x.id === id);
+      if (!g || !isManager()) return;
+      openModal(`
+        <h3>Excluir categoria</h3>
+        <p style="font-size:14px;line-height:1.6">Excluir a categoria <b>${escapeHtml(g.nome)}</b>? Os produtos e seus preços não são alterados, só o agrupamento é removido.</p>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button onclick="ptGroupDelete('${g.id}')">${icon('trash')} Sim, excluir categoria</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      `);
+    }
+
+    async function ptGroupDelete(id) {
+      const g = ptGroups().find(x => x.id === id);
+      if (!g || !isManager()) return;
+      database.grupos = ptGroups().filter(x => x.id !== id);
+      if (priceTool.cat === 'grp:' + id) priceTool.cat = '';
+      addAuditLog(`Categoria "${g.nome}" excluída`);
+      await saveData();
+      closeModal();
+      refreshView();
+      showToast('Categoria excluída.');
+    }
+
     function parseNumberPtBr(val) {
       if (typeof val === 'number') return isNaN(val) ? 0 : val;
       if (val == null || val === '') return 0;
@@ -2991,7 +3696,7 @@
       if (['não', 'nao', 'n', '0', 'false', 'inativo', 'inativa', 'bloqueado', 'desativado', 'off', 'no'].includes(clean)) {
         return 0;
       }
-      return 1; // 'sim', 's', '1', 'true', 'ativo'
+      return 1;
     }
 
     function normalizeUnit(val) {
@@ -3034,7 +3739,6 @@
           let removedExistingInactive = 0;
 
           rows.forEach(row => {
-            // Busca flexível pelas colunas do modelo Produtos.xlsx
             const getCol = (...keys) => {
               for (const k of keys) {
                 if (row[k] !== undefined && row[k] !== '') return row[k];
@@ -3053,8 +3757,6 @@
             const rawAtivo = getCol('Ativo', 'Status', 'Situação', 'Situacao');
             const ativoFlag = parseAtivoSimNao(rawAtivo);
 
-            // REGRA: Se o produto NÃO estiver ativo na planilha, não coloca no sistema
-            // (e caso já existisse no sistema com esse SKU, é removido para não permanecer cadastrado)
             if (ativoFlag === 0) {
               const existingIdx = database.prod.findIndex(p => p.sku.toUpperCase() === rawSku);
               if (existingIdx !== -1) {
@@ -3084,7 +3786,7 @@
               existing.codInt = rawCodInt || existing.codInt || '';
               existing.nome = rawNome;
               existing.un = un;
-              existing.custo = custo;
+              recordCost(existing, custo, 'Importação do catálogo');
               existing.preco = preco > 0 ? preco : existing.preco;
               existing.est = est;
               existing.cat = cat;
@@ -3122,13 +3824,455 @@
       reader.readAsArrayBuffer(file);
     }
 
+    const ORDER_COLORS = ['PT', 'AZ', 'VM', 'VD', 'BR', 'AM', 'CZ', 'MR'];
+    const CABLE_FAMILY_LABEL = {
+      flex750: 'Cabo flex 750V',
+      flex1kv: 'Cabo flex HEPR 0,6/1kV',
+      par: 'Cordão paralelo',
+      pp500: 'Cabo PP 500V',
+      pp1kv: 'Cabo PP 1kV',
+      solar: 'Cabo solar'
+    };
+    const CABLE_COLOR_WORDS = [
+      ['PT', /\b(PTO|PRETO|PT)\b/],
+      ['AZ', /\b(AZUL|AZ)\b/],
+      ['VM', /\b(VM|VERM|VERMELHO)\b/],
+      ['VD', /\b(VD|VERDE)\b/],
+      ['BR', /\b(BCO|BRANCO|BR)\b/],
+      ['AM', /\b(AM|AMARELO)\b/],
+      ['CZ', /\b(CZ|CINZA)\b/],
+      ['MR', /\b(MR|MARROM)\b/]
+    ];
+
+    let orderCostBook = null;
+    let orderCostPlan = null;
+
+    function recordCost(prod, valor, origem) {
+      const novo = Math.round((Number(valor) || 0) * 10000) / 10000;
+      const atual = Number(prod.custo) || 0;
+      if (Math.abs(novo - atual) < 0.00005) return false;
+      if (novo > 0) {
+        const hist = Array.isArray(prod.custoHist) ? prod.custoHist : [];
+        const ultimo = hist.length ? Number(hist[hist.length - 1].v) : 0;
+        if (atual > 0 && Math.abs(ultimo - atual) > 0.00005) {
+          hist.push({ t: Date.now() - 1, v: atual, o: 'Custo anterior' });
+        }
+        hist.push({ t: Date.now(), v: novo, o: origem });
+        prod.custoHist = hist.slice(-10);
+      }
+      prod.custo = novo;
+      return true;
+    }
+
+    function costSeries(prod) {
+      const serie = Array.isArray(prod.custoHist) ? prod.custoHist.map(h => Number(h.v)).filter(v => v > 0) : [];
+      const atual = Number(prod.custo) || 0;
+      if (atual > 0 && (!serie.length || Math.abs(serie[serie.length - 1] - atual) > 0.00005)) serie.push(atual);
+      return serie;
+    }
+
+    function costAverageCell(prod) {
+      const serie = costSeries(prod).slice(-2);
+      if (serie.length < 2) {
+        return `<span class="mut">${formatCurrency(prod.custo)}</span><br><small class="mut">sem histórico</small>`;
+      }
+      const media = (serie[0] + serie[1]) / 2;
+      return `<b title="${escapeHtml(serie.map(formatCurrency).join(' e '))}">${formatCurrency(media)}</b><br><small class="mut">média das 2 últimas</small>`;
+    }
+
+    function costHistoryHtml(prod) {
+      if (!prod) return '';
+      const serie = costSeries(prod).slice(-2);
+      if (serie.length < 2) return '';
+      const media = (serie[0] + serie[1]) / 2;
+      return `<small class="mut" style="display:block;margin-top:4px">Últimos custos: ${serie.map(formatCurrency).join(' → ')} · média ${formatCurrency(media)}</small>`;
+    }
+
+    function cableBitolaKey(raw) {
+      if (typeof raw === 'number') return isFinite(raw) && raw > 0 ? raw.toFixed(2) : null;
+      const t = String(raw ?? '').toUpperCase().replace(/\s+/g, '');
+      let m = t.match(/^(\d+)X(\d+(?:[.,]\d+)?)$/);
+      if (m) return `${m[1]}x${parseFloat(m[2].replace(',', '.')).toFixed(2)}`;
+      m = t.match(/^(\d+(?:[.,]\d+)?)$/);
+      if (m) return parseFloat(m[1].replace(',', '.')).toFixed(2);
+      return null;
+    }
+
+    function describeCable(prod) {
+      const n = normText(prod.nome).toUpperCase().replace(/\s+/g, ' ');
+      let fam = null;
+      if (/\bSOLAR\b/.test(n)) fam = 'solar';
+      else if (/\bPARALELO\b/.test(n)) fam = 'par';
+      else if (/\bPP\b/.test(n) || /^CABO FLEXIVEL 500V/.test(n)) fam = /1\s*KV/.test(n) ? 'pp1kv' : 'pp500';
+      else if (/^CABO FLEX/.test(n) && !/\d\s*X\s*\d/.test(n)) fam = /1\s*KV/.test(n) ? 'flex1kv' : 'flex750';
+      if (!fam) return null;
+
+      let bit = null;
+      if (fam === 'par' || fam === 'pp500' || fam === 'pp1kv') {
+        const m = n.match(/(\d+)\s*X\s*(\d+(?:[.,]\d+)?)/);
+        bit = m ? cableBitolaKey(`${m[1]}x${m[2]}`) : null;
+      } else {
+        const m = n.match(/(\d+(?:[.,]\d+)?)[.,]?\s*MM/);
+        bit = m ? cableBitolaKey(m[1]) : null;
+      }
+
+      let color = null;
+      if (fam === 'pp500' || fam === 'pp1kv') {
+        color = 'PT';
+      } else {
+        const found = CABLE_COLOR_WORDS.filter(([, re]) => re.test(n)).map(([c]) => c);
+        if (found.length === 1) {
+          color = found[0];
+        } else if (!found.length) {
+          const pre = String(prod.sku || '').slice(0, 2).toUpperCase();
+          if (ORDER_COLORS.includes(pre)) color = pre;
+        }
+      }
+      if (!bit || !color) return null;
+
+      const pack = /\b100\s*(M|MT|MTS|METRO|METROS)\b/.test(n) ? 'roll' : 'meter';
+      return { fam, bit, color, pack };
+    }
+
+    function buildCableIndex() {
+      const index = new Map();
+      database.prod.filter(isProductActive).forEach(prod => {
+        const d = describeCable(prod);
+        if (!d) return;
+        const key = `${d.fam}|${d.bit}|${d.color}`;
+        if (!index.has(key)) index.set(key, []);
+        index.get(key).push({ prod, pack: d.pack });
+      });
+      return index;
+    }
+
+    function detectOrderFamily(text) {
+      const t = normText(text).toUpperCase();
+      if (/PARALELO/.test(t)) return 'par';
+      if (/SOLAR/.test(t)) return 'solar';
+      if (/\bPP\b/.test(t)) return /1\s*KV/.test(t) ? 'pp1kv' : 'pp500';
+      if (/\b50\s*M\b/.test(t)) return null;
+      if (/HEPR/.test(t)) return 'flex1kv';
+      if (/FLEX/.test(t)) return 'flex750';
+      return null;
+    }
+
+    function scanOrderSheet(ws) {
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+      const result = { cliente: '', data: '', items: [] };
+      const merged = new Map();
+      const txt = (row, k) => String(row[k] ?? '').trim();
+      let fam = null;
+      let rolCols = [];
+      let carCols = [];
+      let needColors = false;
+
+      rows.forEach(row => {
+        if (!result.cliente && /^CLIENTE/i.test(txt(row, 2))) result.cliente = txt(row, 3);
+        if (!result.data && /^DATA/i.test(txt(row, 18))) result.data = row[19];
+
+        if (/SUB\s*TOTAL/i.test(txt(row, 18))) {
+          fam = null;
+          needColors = false;
+          return;
+        }
+        if (/VALOR\s*UNIT/i.test(txt(row, 18))) {
+          fam = detectOrderFamily(`${txt(row, 2)} ${txt(row, 3)}`);
+          rolCols = [];
+          carCols = [];
+          needColors = true;
+          return;
+        }
+        if (needColors) {
+          const tokens = [];
+          for (let k = 3; k <= 16; k++) {
+            const t = txt(row, k).toUpperCase();
+            if (ORDER_COLORS.includes(t)) tokens.push({ k, color: t });
+          }
+          if (tokens.length) {
+            rolCols = tokens.filter(t => t.k <= 9);
+            carCols = tokens.filter(t => t.k >= 10);
+            needColors = false;
+          }
+          return;
+        }
+        if (!fam) return;
+
+        const unit = row[18];
+        if (typeof unit !== 'number' || !(unit > 0)) return;
+        const bit = cableBitolaKey(row[2]);
+        if (!bit) return;
+
+        const add = (cols, mult) => cols.forEach(c => {
+          const q = Number(row[c.k]);
+          if (!(q > 0)) return;
+          const key = `${fam}|${bit}|${c.color}`;
+          const cur = merged.get(key) || { fam, bit, color: c.color, unit, meters: 0 };
+          cur.meters += q * mult;
+          merged.set(key, cur);
+        });
+        add(rolCols, 100);
+        add(carCols, 1);
+      });
+
+      result.items = Array.from(merged.values());
+      return result;
+    }
+
+    function orderSheetDate(value) {
+      if (typeof value === 'number') {
+        return value > 20000 ? new Date(Math.round((value - 25569) * 86400000)).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '';
+      }
+      const str = String(value || '').trim();
+      return /\d{1,4}[\/-]\d{1,2}[\/-]\d{1,4}/.test(str) ? str : '';
+    }
+
+    function computeOrderCostPlan(sheetName) {
+      const scan = scanOrderSheet(orderCostBook.wb.Sheets[sheetName]);
+      const index = buildCableIndex();
+      const target = new Map();
+      const unmatched = [];
+
+      scan.items.forEach(it => {
+        const hits = index.get(`${it.fam}|${it.bit}|${it.color}`);
+        if (!hits || !hits.length) {
+          unmatched.push(`${CABLE_FAMILY_LABEL[it.fam]} ${it.bit.replace('.', ',')} ${it.color}`);
+          return;
+        }
+        hits.forEach(h => {
+          const para = Math.round(it.unit * (h.pack === 'roll' ? 100 : 1) * 10000) / 10000;
+          target.set(h.prod.id, { prod: h.prod, para });
+        });
+      });
+
+      const changes = [];
+      let same = 0;
+      target.forEach(t => {
+        const de = Number(t.prod.custo) || 0;
+        if (Math.abs(de - t.para) < 0.00005) same++;
+        else changes.push({ prod: t.prod, de, para: t.para });
+      });
+      changes.sort((a, b) => String(a.prod.sku).localeCompare(String(b.prod.sku)));
+
+      return { sheet: sheetName, cliente: scan.cliente, data: orderSheetDate(scan.data), orderedCount: scan.items.length, changes, same, unmatched };
+    }
+
+    function triggerOrderCostUpload() {
+      const input = getEl('order-cost-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    function handleOrderCostUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file || !isManager()) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const sheets = [];
+          wb.SheetNames.forEach(name => {
+            const scan = scanOrderSheet(wb.Sheets[name]);
+            if (scan.items.length) sheets.push({ name, cliente: scan.cliente, n: scan.items.length });
+          });
+          if (!sheets.length) {
+            return showToast('Nenhum cabo com quantidade foi encontrado. Preencha as quantidades nas colunas das cores e salve a planilha no Excel.');
+          }
+          orderCostBook = { wb, file: file.name, sheets };
+          sheets.forEach(sh => {
+            sh.mudam = computeOrderCostPlan(sh.name).changes.length;
+          });
+          const first = sheets.find(sh => sh.mudam > 0) || sheets[0];
+          renderOrderCostPreview(first.name);
+        } catch (err) {
+          console.error(err);
+          showToast('Erro ao ler a planilha. Verifique se é um arquivo .xlsx válido.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderOrderCostPreview(sheetName) {
+      if (!orderCostBook) return;
+      orderCostPlan = computeOrderCostPlan(sheetName);
+      const plan = orderCostPlan;
+
+      const selector = orderCostBook.sheets.length > 1 ? `
+        <div style="margin:10px 0">
+          <label>Aba com o pedido</label>
+          <select onchange="renderOrderCostPreview(this.value)">
+            ${orderCostBook.sheets.map(sh => `<option value="${escapeHtml(sh.name)}" ${sh.name === plan.sheet ? 'selected' : ''}>${escapeHtml(sh.name)}${sh.cliente ? ' — ' + escapeHtml(sh.cliente) : ''} (${sh.n} cabos pedidos · ${sh.mudam} custo(s) mudam)</option>`).join('')}
+          </select>
+        </div>` : '';
+
+      const rows = plan.changes.slice(0, 80).map(c => `
+        <tr>
+          <td><span class="sku-pill">${escapeHtml(c.prod.sku)}</span></td>
+          <td>${escapeHtml(c.prod.nome)}</td>
+          <td style="text-align:right">${formatCurrency(c.de)}</td>
+          <td style="text-align:right"><b>${formatCurrency(c.para)}</b></td>
+        </tr>`).join('');
+
+      openModal(`
+        <h3>Custo pelo último pedido</h3>
+        ${selector}
+        <p class="mut" style="font-size:12px;margin:4px 0 12px">
+          Aba <b>${escapeHtml(plan.sheet)}</b>${plan.cliente ? ` · ${escapeHtml(plan.cliente)}` : ''}${plan.data ? ` · ${escapeHtml(plan.data)}` : ''}.
+          O valor unitário por metro de cada cabo pedido vira o novo custo (rolo de 100 m = valor × 100). O custo anterior fica no histórico para o custo médio.
+        </p>
+        <p style="margin:0 0 12px">
+          <b>${plan.changes.length}</b> custo(s) vão mudar · ${plan.same} já estão iguais · ${plan.unmatched.length} cabo(s) pedido(s) sem produto no catálogo
+        </p>
+        ${plan.changes.length ? `
+          <div style="max-height:320px;overflow:auto">
+            <table>
+              <thead><tr><th>CÓDIGO</th><th>PRODUTO</th><th style="text-align:right">CUSTO ATUAL</th><th style="text-align:right">NOVO CUSTO</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          ${plan.changes.length > 80 ? `<p class="mut" style="font-size:12px">Mostrando 80 de ${plan.changes.length}.</p>` : ''}
+        ` : '<p class="mut">Nenhum custo precisa mudar.</p>'}
+        ${plan.unmatched.length ? `<p class="mut" style="font-size:12px;margin-top:12px">Sem produto no catálogo (ignorados): ${escapeHtml(plan.unmatched.join(', '))}</p>` : ''}
+        <div style="display:flex;gap:10px;margin-top:18px">
+          ${plan.changes.length ? `<button onclick="applyOrderCost()">${icon('dollar')} Aplicar novos custos</button>` : ''}
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      `);
+    }
+
+    async function applyOrderCost() {
+      if (!orderCostPlan || !isManager()) return;
+      const plan = orderCostPlan;
+      let done = 0;
+      plan.changes.forEach(c => {
+        if (recordCost(c.prod, c.para, `Último pedido (${plan.sheet})`)) done++;
+      });
+      addAuditLog(`Custo atualizado pelo último pedido (aba ${plan.sheet}${plan.cliente ? ', ' + plan.cliente : ''}): ${done} produtos`);
+      orderCostPlan = null;
+      orderCostBook = null;
+      await saveData();
+      closeModal();
+      refreshView();
+      showToast(`Custo atualizado em ${done} produto(s) pelo último pedido.`);
+    }
+
+    function triggerCostUpload() {
+      const input = getEl('cost-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
+      }
+    }
+
+    function handleCostUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file || !isManager()) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const sheetName = workbook.SheetNames.find(n => n.trim().toLowerCase() === 'marketup')
+            || workbook.SheetNames.find(n => n.toLowerCase().includes('marketup'));
+          if (!sheetName) return showToast('A aba MARKETUP não foi encontrada nesta planilha.');
+
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+          if (!rows.length) return showToast('A aba MARKETUP está vazia.');
+
+          const pick = (row, ...names) => {
+            const wanted = names.map(normText);
+            const key = Object.keys(row).find(k => wanted.includes(normText(k).trim()));
+            return key === undefined ? '' : row[key];
+          };
+
+          const readCost = raw => {
+            if (typeof raw === 'number') return isFinite(raw) ? raw : NaN;
+            const str = String(raw ?? '').trim();
+            if (!/^[R$\s]*-?[\d.,]+$/.test(str)) return NaN;
+            return parseNumberPtBr(str);
+          };
+
+          const bySku = new Map(database.prod.map(p => [String(p.sku).trim().toUpperCase(), p]));
+          const changes = [];
+          const notFound = [];
+          let same = 0;
+          let noCost = 0;
+
+          rows.forEach(row => {
+            const sku = String(pick(row, 'Código de Barras', 'Codigo de Barras', 'Código', 'Codigo', 'SKU')).trim().toUpperCase();
+            if (!sku) return;
+
+            const novo = readCost(pick(row, 'Preço de Custo', 'Preco de Custo', 'Custo'));
+            if (!(novo > 0)) {
+              noCost++;
+              return;
+            }
+
+            const prod = bySku.get(sku);
+            if (!prod) {
+              notFound.push(sku);
+              return;
+            }
+
+            const valor = Math.round(novo * 10000) / 10000;
+            if (Math.abs((Number(prod.custo) || 0) - valor) < 0.005) {
+              same++;
+              return;
+            }
+            changes.push({ sku, nome: prod.nome, de: Number(prod.custo) || 0, para: valor });
+            recordCost(prod, valor, 'Aba MARKETUP');
+          });
+
+          if (changes.length) {
+            addAuditLog(`Preço de custo atualizado pela aba MARKETUP (${file.name}): ${changes.length} produtos alterados`);
+            await saveData();
+          }
+          refreshView();
+
+          const changeRows = changes.slice(0, 40).map(c => `
+            <tr>
+              <td><span class="sku-pill">${escapeHtml(c.sku)}</span></td>
+              <td>${escapeHtml(c.nome)}</td>
+              <td style="text-align:right">${formatCurrency(c.de)}</td>
+              <td style="text-align:right"><b>${formatCurrency(c.para)}</b></td>
+            </tr>`).join('');
+
+          openModal(`
+            <h3>Preço de custo — aba ${escapeHtml(sheetName)}</h3>
+            <p style="margin:6px 0 14px">
+              <b>${changes.length}</b> alterado(s) · ${same} já estavam iguais · ${notFound.length} código(s) não cadastrado(s) · ${noCost} sem custo válido na planilha
+            </p>
+            ${changes.length ? `
+              <div style="max-height:320px;overflow:auto">
+                <table>
+                  <thead><tr><th>CÓDIGO</th><th>PRODUTO</th><th style="text-align:right">ANTES</th><th style="text-align:right">AGORA</th></tr></thead>
+                  <tbody>${changeRows}</tbody>
+                </table>
+              </div>
+              ${changes.length > 40 ? `<p class="mut" style="font-size:12px">Mostrando 40 de ${changes.length} alterações.</p>` : ''}
+            ` : '<p class="mut">Nenhum custo precisou ser alterado.</p>'}
+            ${notFound.length ? `<p class="mut" style="font-size:12px;margin-top:12px">Não cadastrados no sistema (ignorados): ${escapeHtml(notFound.slice(0, 25).join(', '))}${notFound.length > 25 ? '…' : ''}</p>` : ''}
+            <div style="display:flex;gap:10px;margin-top:18px">
+              <button onclick="closeModal()">Fechar</button>
+            </div>
+          `);
+        } catch (err) {
+          console.error(err);
+          showToast('Erro ao ler a planilha. Verifique se é um arquivo .xlsx válido.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
     async function loadSampleCabelSpreadsheet() {
       let added = 0;
       let updated = 0;
       let ignoredInactive = 0;
 
       SAMPLE_CABEL_PRODUCTS.forEach(item => {
-        // Reconhece o que não está ativo na planilha e NÃO coloca no sistema
         if (!isProductActive(item)) {
           const existingIdx = database.prod.findIndex(p => p.sku.toUpperCase() === item.sku.toUpperCase());
           if (existingIdx !== -1) {
@@ -3154,9 +4298,6 @@
       showToast(`Planilha carregada! ${added} novos, ${updated} atualizados (${ignoredInactive} inativos ignorados e fora do sistema).`);
     }
 
-    // =========================================================================
-    // IMPORTAÇÃO E CARREGAMENTO DA PLANILHA DE CLIENTES (ListaClientes.xlsx)
-    // =========================================================================
     function triggerClientExcelUpload() {
       const input = getEl('client-excel-file-input');
       if (input) {
@@ -3358,7 +4499,31 @@
       },
 
       cli() {
-        const clientList = database.cli;
+        if (searchQuery !== lastCliQuery) { lastCliQuery = searchQuery; cliLimit = CLI_PAGE; }
+        const baseList = database.cli.filter(c => cliStatusFilter === 'SIM' ? c.ativo : cliStatusFilter === 'NAO' ? !c.ativo : true);
+        const results = searchClients(baseList, searchQuery);
+        const terms = clientSearchTerms(searchQuery);
+        const shown = results.slice(0, cliLimit);
+        const remaining = results.length - shown.length;
+        const hasQuery = searchQuery.trim() !== '';
+
+        const resultBar = `
+          <div class="cli-result-bar" role="status" aria-live="polite">
+            <span>${hasQuery
+              ? `<b>${results.length}</b> ${results.length === 1 ? 'cliente encontrado' : 'clientes encontrados'} para “<b>${escapeHtml(searchQuery.trim())}</b>”`
+              : `<b>${results.length}</b> ${results.length === 1 ? 'cliente' : 'clientes'}`}${results.length !== database.cli.length ? ` · de ${database.cli.length} cadastrados` : ''}</span>
+            ${hasQuery || cliStatusFilter !== 'ALL' ? `<button class="tag-btn" onclick="clearCliSearch()">Limpar filtros</button>` : ''}
+          </div>`;
+
+        const moreButtons = remaining > 0 ? `
+          <div class="cli-more">
+            <button class="secondary" onclick="cliLimit+=CLI_PAGE;refreshView()">Mostrar mais ${Math.min(CLI_PAGE, remaining)}</button>
+            <button class="secondary" onclick="cliLimit=Infinity;refreshView()">Mostrar todos (${remaining} restantes)</button>
+          </div>` : '';
+
+        const emptyHint = !results.length && hasQuery
+          ? `<p class="cli-hint">Dica: digite só parte do nome, ou apenas os números do CNPJ/CPF ou do telefone. Acentos e pontuação não importam.</p>` : '';
+
         return renderHeader('CADASTROS (MODELO PLANILHA)', 'CLIENTES', 'openClientForm()') + `
           <div class="sheet-bar">
             <div class="sheet-bar-info">
@@ -3371,19 +4536,19 @@
               <button class="dark-btn" onclick="openClientForm()">+ Novo Cliente Manual</button>
             </div>
           </div>
-        ` +
+        ` + resultBar +
           renderTable(['CÓD. / CLIENTE', 'CNPJ / CPF & IE', 'CONTATO', 'ENDEREÇO / CIDADE', 'VENDEDOR', 'AÇÕES'],
-            clientList.map(c => [
-              `${c.codSis ? `<span class="sku-pill">CÓD ${escapeHtml(c.codSis)}</span> ` : ''}<b>${escapeHtml(c.nome.toUpperCase())}</b>${c.fantasia ? `<br><small class="mut">Fantasia: ${escapeHtml(c.fantasia)}</small>` : ''}`,
-              `${escapeHtml(c.doc)}${c.ie ? `<br><small class="mut">IE: ${escapeHtml(c.ie)}</small>` : ''}`,
-              escapeHtml(`${c.email || '—'} · ${c.tel || '—'}`),
-              `<small>${escapeHtml(c.log || '—')}${c.num ? `, ${escapeHtml(c.num)}` : ''}${c.bairro ? ` - ${escapeHtml(c.bairro)}` : ''}<br><b>${escapeHtml(c.cid || '—')}/${escapeHtml(c.uf || '—')}</b> ${c.cep ? `(${escapeHtml(c.cep)})` : ''}</small>`,
-              c.vendNome ? escapeHtml(c.vendNome) : getEntityName('users', c.vend),
+            shown.map(c => [
+              `${c.codSis ? `<span class="sku-pill">CÓD ${hlText(c.codSis, terms)}</span> ` : ''}<b>${hlText(String(c.nome || '').toUpperCase(), terms)}</b>${c.fantasia ? `<br><small class="mut">Fantasia: ${hlText(c.fantasia, terms)}</small>` : ''}`,
+              `${hlText(c.doc, terms)}${c.ie ? `<br><small class="mut">IE: ${hlText(c.ie, terms)}</small>` : ''}`,
+              `${hlText(c.email || '—', terms)} · ${hlText(c.tel || '—', terms)}`,
+              `<small>${hlText(c.log || '—', terms)}${c.num ? `, ${escapeHtml(c.num)}` : ''}${c.bairro ? ` - ${hlText(c.bairro, terms)}` : ''}<br><b>${hlText(c.cid || '—', terms)}/${escapeHtml(c.uf || '—')}</b> ${c.cep ? `(${escapeHtml(c.cep)})` : ''}</small>`,
+              c.vendNome ? hlText(c.vendNome, terms) : getEntityName('users', c.vend),
               `<div style="display:flex;gap:6px;align-items:center">
                 ${c.ativo ? '<span class="dot-ok">ATIVO</span>' : '<span class="dot-bad">INATIVO</span>'}
                 <button class="secondary" style="padding:4px 8px;font-size:12px" onclick="openClientForm('${c.id}')">${icon('edit')} Editar</button>
               </div>`
-            ]));
+            ]), true) + emptyHint + moreButtons;
       },
 
       prod() {
@@ -3404,6 +4569,9 @@
             <div class="sheet-bar-actions">
               ${isManager() ? `
                 <button onclick="triggerExcelUpload()">${icon('download')} Importar Planilha (.xlsx / .csv)</button>
+                <button onclick="triggerOrderCostUpload()" title="Lê a planilha de cotação/pedido e passa o valor unitário dos cabos pedidos a ser o novo custo">${icon('sheet')} Custo pelo Último Pedido</button>
+                <button onclick="triggerCostUpload()" title="Lê a aba MARKETUP e altera somente o preço de custo dos produtos já cadastrados">${icon('dollar')} Atualizar Custo (aba MARKETUP)</button>
+                <button class="secondary" onclick="navigateTo('precos')">${icon('dollar')} Preços por Categoria</button>
                 ${hasInactiveInDb ? `<button class="danger-outline" onclick="confirmRemoveInactiveProducts()">${icon('ban')} Excluir Inativos (${database.prod.filter(p => !isProductActive(p)).length})</button>` : ''}
                 ${database.prod.length > 0 ? `<button class="danger-outline" onclick="confirmClearAllProducts()" title="Excluir todos os produtos do catálogo">${icon('trash')} Excluir Todos os Produtos</button>` : ''}
               ` : ''}
@@ -3412,7 +4580,7 @@
           </div>
         ` +
           renderTable(
-            ['CÓDIGO (PEDIDO)', 'DESCRIÇÃO DO CABO / NOME', 'CATEGORIA', 'ATIVO', 'UN.', 'CUSTO', 'PREÇO VENDA', 'MARGEM', 'ESTOQUE', 'AÇÕES'],
+            ['CÓDIGO (PEDIDO)', 'DESCRIÇÃO DO CABO / NOME', 'CATEGORIA', 'ATIVO', 'UN.', 'CUSTO', 'CUSTO MÉDIO', 'PREÇO VENDA', 'MARGEM', 'ESTOQUE', 'AÇÕES'],
             filteredProducts.map(p => {
               const active = isProductActive(p);
               const margin = p.preco > 0 ? Math.round((p.preco - p.custo) / p.preco * 100) : 0;
@@ -3425,6 +4593,7 @@
                   : `<span class="badge-nao">${icon('x')} NÃO</span>`,
                 escapeHtml(p.un),
                 isManager() ? formatCurrency(p.custo) : '—',
+                isManager() ? costAverageCell(p) : '—',
                 `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
                 isManager() ? `${margin}%` : '—',
                 p.est == null ? '<span class="mut">SERVIÇO</span>' : p.est > 0 ? `<span class="dot-ok">${p.est} ${escapeHtml(p.un)}</span>` : `<span class="dot-bad">${p.est} ${escapeHtml(p.un)}</span>`,
@@ -3437,6 +4606,14 @@
               ];
             })
           );
+      },
+
+      precos() {
+        if (!isManager()) {
+          return renderHeader('CATÁLOGO', 'PREÇOS POR CATEGORIA', '') +
+            `<div class="card"><p class="mut" style="margin:0">Somente administradores podem alterar preços em lote.</p></div>`;
+        }
+        return renderHeader('CATÁLOGO', 'PREÇOS POR CATEGORIA', '') + `<div id="pt_root">${ptRoot()}</div>`;
       },
 
       orc() {
@@ -3866,9 +5043,6 @@
       showToast(`Cliente ${clientName} salvo com sucesso!`);
     }
 
-    // =========================================================================
-    // CADASTRO, EDIÇÃO E EXCLUSÃO DE PRODUTOS
-    // =========================================================================
     function openProductForm(editId = '') {
       const existing = editId ? database.prod.find(p => p.id === editId) : null;
       const isAtivo = existing ? isProductActive(existing) : true;
@@ -3920,6 +5094,7 @@
             <div>
               <label>Preço de Custo (R$)</label>
               <input id="prod_cost" type="number" step="0.01" placeholder="Ex: 38.50" value="${existing ? existing.custo : ''}">
+              ${costHistoryHtml(existing)}
             </div>
             <div>
               <label>Preço Venda Varejo (R$) *</label>
@@ -3959,7 +5134,6 @@
         return showToast('Informe o Código (ex: VM250100), a Descrição do Cabo e o Preço de Venda.');
       }
 
-      // Se marcado como Não Ativo, não permanece nem entra no sistema
       if (ativoFlag === 0) {
         if (editId) {
           database.prod = database.prod.filter(p => p.id !== editId);
@@ -3987,7 +5161,7 @@
         target.nome = name;
         target.ativo = 1;
         target.un = getVal('prod_unit');
-        target.custo = costPrice;
+        recordCost(target, costPrice, 'Edição manual');
         target.preco = salePrice;
         target.est = stockInput === '' ? null : Number(stockInput);
         target.cat = cat;
@@ -4102,9 +5276,6 @@
       showToast('Todos os produtos foram excluídos do catálogo.');
     }
 
-    // =========================================================================
-    // EXCLUSÃO DE ORÇAMENTOS E PEDIDOS
-    // =========================================================================
     function confirmDeleteQuote(quoteId) {
       const quote = database.orc.find(o => o.id === quoteId);
       if (!quote || (!isManager() && quote.vend !== currentUser.id)) return;
@@ -4127,7 +5298,6 @@
       const quote = database.orc[idx];
       if (!isManager() && quote.vend !== currentUser.id) return closeModal();
 
-      // Desvincula eventual pedido que apontava para este orçamento
       database.ped.forEach(p => {
         if (p.orc === quote.id) p.orc = null;
       });
@@ -4165,7 +5335,6 @@
       const order = database.ped[idx];
       if (!isManager() && order.vend !== currentUser.id) return closeModal();
 
-      // Se veio de um orçamento, libera o orçamento novamente
       if (order.orc) {
         const originQuote = database.orc.find(o => o.id === order.orc || o.ped === order.id);
         if (originQuote) {
@@ -4179,7 +5348,6 @@
         }
       }
 
-      // Estorna saldo faturado para o estoque dos produtos
       order.itens.forEach(item => {
         if (item.fat > 0) {
           const prod = database.prod.find(p => p.id === item.p);
@@ -4189,7 +5357,6 @@
         }
       });
 
-      // Remove faturas, contas a receber e comissões atreladas ao pedido
       const invoiceIds = database.fat.filter(f => f.ped === order.id).map(f => f.id);
       if (invoiceIds.length > 0) {
         database.fat = database.fat.filter(f => f.ped !== order.id);
@@ -4205,9 +5372,6 @@
       showToast(`Pedido #${order.n} excluído com sucesso!`);
     }
 
-    // =========================================================================
-    // ORÇAMENTOS E PEDIDOS COM LEITURA POR CÓDIGO (Ex: VM250100 / PT500MT)
-    // =========================================================================
     function openQuoteForm() {
       const firstClient = database.cli.find(c => c.ativo);
       draftOrder = {
@@ -4225,6 +5389,113 @@
       };
       lookedUpProduct = null;
       renderQuoteModal();
+    }
+
+    let cliComboResults = [];
+    let cliComboActive = 0;
+
+    function cliComboLabel(c) { return c ? `${c.nome} (${c.doc})` : ''; }
+
+    function cliComboSummary(c) {
+      if (!c) return '';
+      const parts = [c.doc, c.cid ? `${c.cid}/${c.uf || ''}` : '', c.tel].filter(Boolean);
+      return escapeHtml(parts.join(' · '));
+    }
+
+    function cliComboSelected() {
+      const id = getVal('quote_cli');
+      return database.cli.find(c => c.id === id);
+    }
+
+    function cliComboFocus(input) {
+      cliComboRender('');
+      input.select();
+    }
+
+    function cliComboClick(input) {
+      const list = getEl('quote_cli_list');
+      if (list && list.hidden) cliComboFocus(input);
+    }
+
+    function cliComboRender(query) {
+      const list = getEl('quote_cli_list');
+      if (!list) return;
+      const all = searchClients(database.cli.filter(c => c.ativo), query);
+      const terms = clientSearchTerms(query);
+      cliComboResults = all.slice(0, 30);
+      cliComboActive = 0;
+      list.innerHTML = cliComboResults.length
+        ? cliComboResults.map((c, i) => `
+            <div class="cli-combo-item ${i === 0 ? 'act' : ''}" role="option" id="quote_cli_opt_${i}" onmousedown="event.preventDefault();cliComboPick(${i})" onmousemove="cliComboHover(${i})">
+              <b>${hlText(c.nome, terms)}</b>
+              <small>${hlText(c.doc || '—', terms)}${c.codSis ? ` · cód ${hlText(c.codSis, terms)}` : ''}${c.cid ? ` · ${hlText(c.cid, terms)}/${escapeHtml(c.uf || '')}` : ''}${c.tel ? ` · ${hlText(c.tel, terms)}` : ''}</small>
+            </div>`).join('') +
+          `<div class="cli-combo-foot">${all.length > 30 ? `Mostrando 30 de ${all.length} — continue digitando para refinar.` : `${all.length} ${all.length === 1 ? 'cliente' : 'clientes'}`}</div>`
+        : `<div class="cli-combo-foot">Nenhum cliente ativo encontrado para “${escapeHtml(query)}”.</div>`;
+      list.hidden = false;
+      const input = getEl('quote_cli_search');
+      if (input) input.setAttribute('aria-expanded', 'true');
+    }
+
+    function cliComboHover(i) {
+      if (i === cliComboActive) return;
+      cliComboSetActive(i, false);
+    }
+
+    function cliComboSetActive(i, scroll = true) {
+      const items = document.querySelectorAll('#quote_cli_list .cli-combo-item');
+      if (!items.length) return;
+      cliComboActive = Math.max(0, Math.min(items.length - 1, i));
+      items.forEach((el, idx) => el.classList.toggle('act', idx === cliComboActive));
+      if (scroll) items[cliComboActive].scrollIntoView({ block: 'nearest' });
+    }
+
+    function cliComboClose() {
+      const list = getEl('quote_cli_list');
+      if (list) list.hidden = true;
+      const input = getEl('quote_cli_search');
+      if (input) input.setAttribute('aria-expanded', 'false');
+    }
+
+    function cliComboBlur() {
+      cliComboClose();
+      const input = getEl('quote_cli_search');
+      if (input) input.value = cliComboLabel(cliComboSelected());
+    }
+
+    function cliComboKey(event) {
+      const list = getEl('quote_cli_list');
+      const open = list && !list.hidden;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!open) {
+          const field = getEl('quote_cli_search');
+          cliComboRender(field.value === cliComboLabel(cliComboSelected()) ? '' : field.value);
+          field.select();
+          return;
+        }
+        cliComboSetActive(cliComboActive + (event.key === 'ArrowDown' ? 1 : -1));
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (open && cliComboResults.length) cliComboPick(cliComboActive);
+      } else if (event.key === 'Escape' && open) {
+        event.preventDefault();
+        cliComboBlur();
+      }
+    }
+
+    function cliComboPick(i) {
+      const c = cliComboResults[i];
+      if (!c) return;
+      getEl('quote_cli').value = c.id;
+      getEl('quote_cli_search').value = cliComboLabel(c);
+      getEl('quote_cli_sel').innerHTML = cliComboSummary(c);
+      cliComboClose();
+      syncDraftValues();
+      if (c.vendNome && getEl('quote_seller_name')) {
+        getEl('quote_seller_name').value = c.vendNome;
+        draftOrder.vendNome = c.vendNome;
+      }
     }
 
     function syncDraftValues() {
@@ -4325,6 +5596,32 @@
       showToast('Cabo adicionado ao orçamento!');
     }
 
+    function applyQuoteMarkup() {
+      syncDraftValues();
+      if (!draftOrder.itens.length) return showToast('Adicione ao menos um cabo ao pedido.');
+      const pct = Number(String(getVal('quote_markup')).trim().replace(',', '.'));
+      if (!isFinite(pct) || pct === 0 || pct <= -100) return showToast('Informe uma porcentagem válida (ex: 8).');
+      if (pct < 0 && currentUser.role === 'vendedor') return showToast('Vendedor só pode aplicar acréscimo.');
+
+      draftOrder.markupBackup = { pct, list: draftOrder.itens.map(i => ({ i, pu: i.pu })) };
+      draftOrder.itens.forEach(i => {
+        i.pu = Math.round(i.pu * (1 + pct / 100) * 10000) / 10000;
+      });
+      renderQuoteModal();
+      showToast(`${pct > 0 ? '+' : ''}${formatNumber(pct, 2)}% aplicado no valor de ${draftOrder.itens.length} item(ns).`);
+    }
+
+    function undoQuoteMarkup() {
+      if (!draftOrder?.markupBackup) return;
+      syncDraftValues();
+      draftOrder.markupBackup.list.forEach(x => {
+        x.i.pu = x.pu;
+      });
+      draftOrder.markupBackup = null;
+      renderQuoteModal();
+      showToast('Acréscimo desfeito.');
+    }
+
     function renderQuoteModal() {
       const availableClients = database.cli.filter(c => c.ativo);
       const activeProducts = database.prod.filter(isProductActive);
@@ -4336,11 +5633,22 @@
           <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:10px">
             <div>
               <label>Cliente *</label>
-              <select id="quote_cli" onchange="syncDraftValues();const cl=database.cli.find(x=>x.id===this.value);if(cl&&cl.vendNome){getEl('quote_seller_name').value=cl.vendNome;draftOrder.vendNome=cl.vendNome;}">
-                ${availableClients.length
-                  ? availableClients.map(c => `<option value="${c.id}" ${c.id === draftOrder.cli ? 'selected' : ''}>${escapeHtml(c.nome)} (${escapeHtml(c.doc)})</option>`).join('')
-                  : `<option value="">— Cadastre um cliente no menu Clientes primeiro —</option>`}
-              </select>
+              ${(() => {
+                  const selected = availableClients.find(c => c.id === draftOrder.cli);
+                  if (!availableClients.length) {
+                    return `<input type="hidden" id="quote_cli" value=""><input type="text" disabled placeholder="— Cadastre um cliente no menu Clientes primeiro —">`;
+                  }
+                  return `
+                    <div class="cli-combo">
+                      <input type="hidden" id="quote_cli" value="${escapeHtml(selected ? selected.id : '')}">
+                      <input type="text" id="quote_cli_search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="quote_cli_list" aria-autocomplete="list"
+                        placeholder="Digite nome, CNPJ/CPF, código ou cidade…"
+                        value="${escapeHtml(cliComboLabel(selected))}"
+                        onfocus="cliComboFocus(this)" onclick="cliComboClick(this)" oninput="cliComboRender(this.value)" onkeydown="cliComboKey(event)" onblur="cliComboBlur()">
+                      <div class="cli-combo-list" id="quote_cli_list" role="listbox" hidden onmousedown="event.preventDefault()"></div>
+                      <div class="cli-combo-sel" id="quote_cli_sel">${cliComboSummary(selected)}</div>
+                    </div>`;
+                })()}
             </div>
             <div>
               <label>Quem Vendeu (Vendedor no Pedido) *</label>
@@ -4351,7 +5659,6 @@
             </div>
           </div>
 
-          <!-- Bloco de Busca Rápida pelo Código da Planilha (Ex: VM250100 ou PT500MT) -->
           <div class="code-lookup-box">
             <label style="margin-top:0;color:var(--pri)">1. Digitar Código do Cabo / Produto (Ex: PT500MT ou VM250100)</label>
             <div style="display:grid;grid-template-columns:1.4fr 1.6fr;gap:10px;align-items:end">
@@ -4394,6 +5701,16 @@
               `<button class="secondary" style="padding:4px 8px;font-size:11px" onclick="draftOrder.itens.splice(${idx},1);renderQuoteModal()">${icon('x')}</button>`
             ];
           }), true)}
+
+          ${draftOrder.itens.length ? `
+            <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:6px 0 14px">
+              <div>
+                <label style="margin:0">Acrescentar % no valor de cada cabo</label>
+                <input id="quote_markup" type="text" inputmode="decimal" placeholder="Ex: 8" style="width:130px" onkeydown="if(event.key==='Enter'){event.preventDefault();applyQuoteMarkup()}">
+              </div>
+              <button type="button" class="secondary" onclick="applyQuoteMarkup()">Aplicar %</button>
+              ${draftOrder.markupBackup ? `<button type="button" class="secondary" onclick="undoQuoteMarkup()">Desfazer último (${formatNumber(draftOrder.markupBackup.pct, 2)}%)</button>` : ''}
+            </div>` : ''}
 
           <div style="display:grid;grid-template-columns:1.2fr 1fr 0.8fr 1fr;gap:10px">
             <div>
@@ -4588,9 +5905,6 @@
         </div>`);
     }
 
-    // =========================================================================
-    // SISTEMA DE IMPRESSÃO DE PEDIDOS / ORÇAMENTOS (MODELO CABOLÂNDIA / MARKETUP)
-    // =========================================================================
     function openPrintPreview(type, id, forceTitleMode = null) {
       const collection = type === 'orc' ? database.orc : database.ped;
       const doc = collection.find(x => x.id === id);
@@ -4603,7 +5917,6 @@
       const docLabelTitle = forceTitleMode || (type === 'orc' ? 'ORÇAMENTO DE VENDA' : 'PEDIDO DE VENDA');
       const topDocLabel = docLabelTitle === 'ORÇAMENTO DE VENDA' ? `Orçamento: ${doc.n}` : `Pedido: ${doc.n}`;
 
-      // Cálculos de quantidades e totais
       let totalQty = 0;
       let grossItemsSum = 0;
       let totalDiscountSum = 0;
@@ -4640,12 +5953,10 @@
       const outrosVal = Number(doc.outros) || 0;
       const grandTotal = netItemsSum + freteVal + outrosVal;
 
-      // Monta parcelas de Forma / Condições de Pagamento
       const installmentsCount = Number(doc.parc) || 1;
       const formaPag = (doc.formaPag || 'CHEQUE').toUpperCase();
       const condPag = doc.condPag || `${installmentsCount * 30} Dias`;
 
-      // Verifica se já existem títulos gerados no financeiro para este pedido
       const relatedInvoices = database.fat.filter(f => f.ped === doc.id).map(f => f.id);
       const relatedReceivables = database.rec.filter(r => relatedInvoices.includes(r.fat));
 
@@ -4710,7 +6021,6 @@
           <div>
             <div class="mu-top-number">${escapeHtml(topDocLabel)}</div>
 
-            <!-- Cabeçalho da Empresa -->
             <div class="mu-header-grid">
               <div class="mu-logo-box">
                 ${emp.logoUrl ? `<img src="${escapeHtml(emp.logoUrl)}" alt="Logo" onerror="this.style.display='none'">` : ''}
@@ -4725,7 +6035,6 @@
               </div>
             </div>
 
-            <!-- Seção 1: PEDIDO DE VENDA -->
             <div class="mu-section-bar">${escapeHtml(docLabelTitle)}</div>
             <div class="mu-info-rows">
               <div class="mu-info-line">
@@ -4750,7 +6059,6 @@
               </div>
             </div>
 
-            <!-- Seção 2: ENDEREÇO DE COBRANÇA -->
             <div class="mu-section-bar">ENDEREÇO DE COBRANÇA</div>
             <div class="mu-info-rows">
               <div class="mu-info-line">
@@ -4765,7 +6073,6 @@
               </div>
             </div>
 
-            <!-- Seção 3: ENDEREÇO DE ENTREGA -->
             <div class="mu-section-bar">ENDEREÇO DE ENTREGA</div>
             <div class="mu-info-rows">
               <div class="mu-info-line">
@@ -4780,7 +6087,6 @@
               </div>
             </div>
 
-            <!-- Seção 4: ITENS DO PEDIDO -->
             <div class="mu-section-bar">ITENS DO PEDIDO</div>
             <table class="mu-items-table">
               <thead>
@@ -4804,7 +6110,6 @@
               <span>Valor total dos itens: <b>${formatCurrency(netItemsSum)}</b></span>
             </div>
 
-            <!-- Seção 5: VALOR TOTAL DE PEDIDO -->
             <div class="mu-section-bar">VALOR TOTAL DE PEDIDO</div>
             <div class="mu-totals-row">
               <div class="mu-total-col">
@@ -4829,7 +6134,6 @@
               </div>
             </div>
 
-            <!-- Seção 6: FORMA / CONDIÇÕES DE PAGAMENTO -->
             <div class="mu-section-bar">FORMA / CONDIÇÕES DE PAGAMENTO</div>
             <table class="mu-pay-table">
               <thead>
@@ -4847,12 +6151,10 @@
               </tbody>
             </table>
 
-            <!-- Seção 7: OBSERVAÇÕES -->
             <div class="mu-section-bar">OBSERVAÇÕES</div>
             <div class="mu-obs-area">${escapeHtml(doc.obs || '')}</div>
           </div>
 
-          <!-- Rodapé de Assinaturas e Data/Hora de Impressão -->
           <div class="mu-footer-area">
             <div class="mu-signatures">
               <div class="mu-sig-line">Assinatura do Comprador</div>
@@ -5189,14 +6491,9 @@
       showToast(`Usuário ${removed.nome} excluído com sucesso!`);
     }
 
-    // =========================================================================
-    // INTERFACE: cor do cabo no SKU, indicador do menu, contagem dos indicadores
-    // (somente apresentação — nenhuma regra de negócio passa por aqui)
-    // =========================================================================
     const CABLE_PREFIX = { VM: 'vm', PT: 'pt', AZ: 'az', VD: 'vd', BR: 'br', AM: 'am' };
     const CABLE_NAME = { vm: 'vermelho', pt: 'preto', az: 'azul', vd: 'verde', br: 'branco', am: 'amarelo' };
 
-    // O prefixo do código é a cor da isolação (VM250100 = cabo vermelho, 2,50 mm, 100 m)
     function tagCableColors() {
       document.querySelectorAll('.sku-pill:not([data-cor])').forEach(el => {
         const match = el.textContent.trim().toUpperCase().match(/^(VM|PT|AZ|VD|BR|AM)\d/);
@@ -5213,7 +6510,6 @@
       requestAnimationFrame(() => { cableTagQueued = false; tagCableColors(); });
     }).observe(document.body, { childList: true, subtree: true });
 
-    // Pílula do menu: um único elemento que desliza até o item ativo
     function placeNavIndicator() {
       const list = document.querySelector('.nav-list');
       const indicator = list && list.querySelector('.nav-indicator');
@@ -5231,7 +6527,6 @@
         indicator.style.transition = '';
       }
 
-      // no celular o menu é horizontal: mantém o item ativo à vista
       const nav = list.parentElement;
       if (nav && nav.scrollWidth > nav.clientWidth + 2) {
         nav.scrollTo({ left: Math.max(0, active.offsetLeft - 24), behavior: 'smooth' });
@@ -5240,7 +6535,6 @@
     window.addEventListener('resize', placeNavIndicator);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeNavIndicator);
 
-    // Indicadores do painel contam até o valor real; o texto final é sempre o original
     function animateKpis(scope) {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       scope.querySelectorAll('.cards .card h3').forEach((el, index) => {
@@ -5267,7 +6561,6 @@
       });
     }
 
-    // Itens de menu e atalhos do topo não são <a href>: Enter/Espaço também os acionam
     document.addEventListener('keydown', event => {
       if ((event.key === 'Enter' || event.key === ' ') && event.target.matches &&
           event.target.matches('nav a, .pill-item, .brand-area .logo')) {
@@ -5276,7 +6569,6 @@
       }
     });
 
-    // Inicialização: busca os dados do servidor no Render (/api/db)
     (async () => {
       let syncLocalToServer = false;
       try {
@@ -5286,7 +6578,6 @@
         }
       } catch (e) {}
 
-      // Servidor fora do ar, com erro, ou banco ainda vazio: recupera a cópia local
       if (!database || !Array.isArray(database.users)) {
         try {
           const local = localStorage.getItem('marketlandia_db');
@@ -5316,7 +6607,8 @@
         };
       }
 
-      // Remove automaticamente quaisquer produtos inativos legados que já estivessem salvos
+      if (!Array.isArray(database.grupos)) database.grupos = [];
+
       if (Array.isArray(database.prod)) {
         const beforeLen = database.prod.length;
         database.prod = database.prod.filter(isProductActive);
@@ -5327,7 +6619,6 @@
 
       let seedChanged = false;
 
-      // Pré-carrega automaticamente todos os 988 clientes da planilha ListaClientes.xlsx se a lista estiver vazia
       if (Array.isArray(database.cli) && database.cli.length === 0) {
         const defaultSeller = database.users.find(u => u.role === 'vendedor') || database.users[0];
         SAMPLE_CLIENT_LIST.forEach(item => {
