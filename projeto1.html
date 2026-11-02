@@ -2052,6 +2052,8 @@
     let draftOrder = null;
     let lookedUpProduct = null;
     let selectedGanhosMonth = new Date().toISOString().slice(0, 7);
+    let salesFrom = '';
+    let salesTo = '';
 
     const SAMPLE_CLIENT_LIST_RAW = [
       ["854", "J", "WILAME ROMARIO LIMA DA SILVA PAES", "", "COD-854", "", "", "", "RUA SUICA", "19", "RES DOS NOBRES", "Machado", "MG", "37750-000"], ["748", "J", "APSA AGROPECUARIA SANTO ANTONIO LTDA", "", "18.239.533/0001-96", "", "teodora.oliveira@prolinkcontabil.com.br", "(35) 3851-1336", "BR 265 KM 450. ZONA RURAL", "450 (Fazenda Santo Antonio)", "ZONA RURAL", "Boa Esperança", "MG", "37170-000"],
@@ -2884,7 +2886,9 @@
       ['ped', 'Vendas / Pedidos', icon('cart'), false],
       ['cli', 'Clientes', icon('users'), false],
       ['fat', 'Notas / Faturas', icon('file'), false],
+      ['vendas', 'Relatório de Vendas', icon('chart'), false],
       ['ganhos', 'Ganhos no Mês', icon('chart'), false],
+      ['receber', 'Contas a Receber', icon('dollar'), false],
       ['rec', 'Financeiro', icon('dollar'), false],
       ['com', 'Comissões', icon('chart'), false],
       ['usr', 'Usuários', icon('user'), true],
@@ -3086,7 +3090,7 @@
               <a class="logo" role="link" tabindex="0" onclick="navigateTo('home')">Market<span>Landia</span></a>
               <div class="top-pills">
                 <span class="pill-active">${icon('bolt')} ERP</span>
-                <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('rec')">${icon('dollar')} Financeiro</span>
+                <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('receber')">${icon('dollar')} Contas a Receber</span>
                 <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('ped')">${icon('monitor')} PDV / Vendas</span>
                 <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('prod')">${icon('box')} Catálogo (${database.prod.length})</span>
               </div>
@@ -4632,7 +4636,7 @@
               o.ped ? '<span class="dot-ok">CONVERTIDO</span>' : `<select onchange="updateQuoteStatus('${o.id}', this.value)">${STATUS_LIST.map(s => `<option${s === o.st ? ' selected' : ''}>${s}</option>`).join('')}</select>`,
               `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                 <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="openPrintPreview('orc', '${o.id}')" title="Imprimir no modelo Cabolândia">${icon('printer')} Imprimir</button>
-                ${o.st === 'Aprovado pelo cliente' && !o.ped ? `<button style="padding:5px 10px;font-size:12px" onclick="convertToOrder('${o.id}')">Converter em pedido</button>` : o.ped ? `<small class="mut">Pedido #${escapeHtml((database.ped.find(p => p.id === o.ped) || {}).n)}</small>` : ''}
+                ${!o.ped ? `<button style="padding:5px 10px;font-size:12px" onclick="convertToOrder('${o.id}')" title="Cria o pedido com o mesmo número deste orçamento">${icon('swap')} Virar pedido</button>` : o.ped ? `<small class="mut">Pedido #${escapeHtml((database.ped.find(p => p.id === o.ped) || {}).n)}</small>` : ''}
                 <button class="danger-outline" style="padding:5px 10px;font-size:12px" onclick="confirmDeleteQuote('${o.id}')" title="Excluir Orçamento">${icon('trash')} Excluir</button>
               </div>`
             ]));
@@ -4651,7 +4655,7 @@
                   const pr = database.prod.find(x => x.id === i.p);
                   return pr ? `<b>${escapeHtml(pr.sku)}</b> — ${formatNumber(i.q, 3)} ${escapeHtml(pr.un || 'UN')}` : `${i.q}x`;
                 }).join('<br>')}</small>`,
-                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(calculateOrderTotal(p))}</b><br><span class="${done ? 'dot-ok' : 'dot-warn'}">${done ? 'FATURADO' : 'PENDENTE'}</span>`,
+                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(calculateOrderTotal(p))}</b><br><span class="${done ? 'dot-ok' : 'dot-warn'}">${done ? 'FATURADO' : 'PENDENTE'}</span>${orderFlowBadges(p)}`,
                 `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                   <button style="padding:6px 11px;font-size:12px" onclick="openPrintPreview('ped', '${p.id}')" title="Imprimir Pedido de Venda">${icon('printer')} Imprimir</button>
                   <button class="secondary" style="padding:6px 10px;font-size:12px" onclick="openOrderDetails('${p.id}')" title="Abrir e Faturar Pedido">${icon('edit')} Abrir</button>
@@ -4661,9 +4665,116 @@
             }));
       },
 
+      vendas() {
+        ensureSalesPeriod();
+        const rows = getSalesRows();
+        const total = sumCollection(rows, r => r.total);
+        const liquido = sumCollection(rows, r => r.liq);
+        const pedidos = new Set(rows.map(r => r.pedNum)).size;
+        const withInvoice = rows.filter(r => r.inv);
+        const finances = withInvoice.map(r => invoiceFinance(r.inv));
+        const recebido = sumCollection(finances, x => x.pago);
+        const aReceber = sumCollection(finances, x => x.saldo);
+        const entregues = withInvoice.filter(r => r.inv.ent).length;
+
+        const bySeller = new Map();
+        rows.forEach(r => {
+          const key = r.vend || r.vendNome;
+          const cur = bySeller.get(key) || { nome: r.vendNome, qtd: 0, total: 0 };
+          cur.qtd += 1;
+          cur.total += r.total;
+          bySeller.set(key, cur);
+        });
+        const sellerRows = Array.from(bySeller.values()).sort((a, b) => b.total - a.total).map(x => [
+          `<b>${escapeHtml(String(x.nome || '—').toUpperCase())}</b>`,
+          x.qtd,
+          `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(x.total)}</b>`,
+          `${formatNumber(total > 0 ? (x.total / total) * 100 : 0, 1)}%`
+        ]);
+
+        return renderHeader('RELATÓRIOS', 'RELATÓRIO DE VENDAS', '') + `
+          <div class="sheet-bar">
+            <div class="sheet-bar-info">
+              <strong>${icon('chart')} Período: ${formatSalesDate(salesFrom)} a ${formatSalesDate(salesTo)}</strong>
+              <small>Conta como venda todo pedido faturado, mesmo que ainda não tenha sido pago.</small>
+            </div>
+            <div class="sheet-bar-actions" style="flex-wrap:wrap">
+              <label style="margin:0;font-size:12px">De:</label>
+              <input type="date" value="${escapeHtml(salesFrom)}" onchange="setSalesPeriod(this.value, salesTo)" style="width:150px">
+              <label style="margin:0;font-size:12px">Até:</label>
+              <input type="date" value="${escapeHtml(salesTo)}" onchange="setSalesPeriod(salesFrom, this.value)" style="width:150px">
+              <button class="secondary" onclick="quickSalesPeriod('hoje')">Hoje</button>
+              <button class="secondary" onclick="quickSalesPeriod('mes')">Este mês</button>
+              <button class="secondary" onclick="quickSalesPeriod('passado')">Mês passado</button>
+              <button class="secondary" onclick="quickSalesPeriod('ano')">Este ano</button>
+              <button onclick="exportSalesReport()">${icon('download')} Baixar Excel</button>
+            </div>
+          </div>
+          <div class="cards">
+            ${renderCard('Total de vendas (faturado)', formatCurrency(total), 'ok')}
+            ${renderCard('Pedidos faturados', pedidos)}
+            ${renderCard('Ticket médio por fatura', formatCurrency(rows.length ? total / rows.length : 0))}
+            ${renderCard('Líquido dos itens', formatCurrency(liquido))}
+            ${renderCard('Já recebido', formatCurrency(recebido), 'ok')}
+            ${renderCard('A receber', formatCurrency(aReceber), aReceber > 0.004 ? 'bad' : '')}
+            ${renderCard('Entregues', `${entregues} de ${withInvoice.length}`)}
+          </div>
+          ${isManager() ? `
+            <h3 class="section-title">Vendas por Vendedor</h3>
+            ${renderTable(['VENDEDOR', 'FATURAS', 'TOTAL VENDIDO', '% DO TOTAL'], sellerRows, true)}` : ''}
+          <h3 class="section-title">Pedidos Faturados no Período (${rows.length})</h3>
+          ${renderTable(['FATURA', 'PEDIDO', 'DATA', 'CLIENTE', 'VENDEDOR', 'TOTAL', 'ENTREGA', 'PAGAMENTO'],
+            rows.map(r => [
+              `<span class="num-serif">${escapeHtml(r.fatNum)}</span>`,
+              `#${escapeHtml(r.pedNum)}`,
+              formatDate(r.data),
+              `<b>${getEntityName('cli', r.cli).toUpperCase()}</b>`,
+              escapeHtml(r.vendNome || '—'),
+              `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(r.total)}</b>`,
+              r.inv ? deliveryBadge(r.inv) : '<span class="mut">—</span>',
+              r.inv ? paymentBadge(r.inv) : '<span class="mut">—</span>'
+            ]))}
+        `;
+      },
+
+      receber() {
+        const now = Date.now();
+        const open = filterByOwnership(database.fat)
+          .map(inv => ({ inv, fin: invoiceFinance(inv) }))
+          .filter(x => x.fin.saldo > 0.004)
+          .sort((a, b) => (a.fin.proxVenc || 0) - (b.fin.proxVenc || 0));
+
+        const totalAberto = sumCollection(open, x => x.fin.saldo);
+        const vencido = sumCollection(open.filter(x => x.fin.proxVenc && x.fin.proxVenc < now), x => x.fin.saldo);
+
+        return renderHeader('FINANCEIRO', 'CONTAS A RECEBER', '') + `
+          <div class="cards">
+            ${renderCard('Total a receber', formatCurrency(totalAberto))}
+            ${renderCard('Pedidos não pagos', open.length)}
+            ${renderCard('Com parcela vencida', open.filter(x => x.fin.proxVenc && x.fin.proxVenc < now).length, 'bad')}
+            ${renderCard('Valor vencido', formatCurrency(vencido), 'bad')}
+          </div>` +
+          renderTable(['PEDIDO / FATURA', 'CLIENTE / VENDEDOR', 'FATURADO EM', 'PRÓX. VENCIMENTO', 'TOTAL', 'RECEBIDO', 'SALDO', 'ENTREGA', 'AÇÕES'],
+            open.map(({ inv, fin }) => {
+              const ped = database.ped.find(p => p.id === inv.ped);
+              const late = fin.proxVenc && fin.proxVenc < now;
+              return [
+                `<span class="num-serif">#${escapeHtml(ped ? ped.n : '—')}</span><span class="sub-status">FATURA ${escapeHtml(inv.n)}</span>`,
+                `<b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br><small class="mut">Vendedor: <b>${escapeHtml(String(ped ? getSellerDisplayName(ped) : getEntityName('users', inv.vend)))}</b></small>`,
+                formatDate(inv.data),
+                fin.proxVenc ? formatDate(fin.proxVenc) + (late ? '<br><span class="dot-bad">ATRASADO</span>' : '') : '—',
+                formatCurrency(fin.valor),
+                formatCurrency(fin.pago),
+                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(fin.saldo)}</b>`,
+                deliveryBadge(inv),
+                invoiceActionsHtml(inv)
+              ];
+            }));
+      },
+
       fat() {
         return renderHeader('FISCAL E COMERCIAL', 'FATURAMENTO', '') +
-          renderTable(['FATURA', 'EMISSÃO', 'PEDIDO ORIGEM', 'CLIENTE', 'LÍQUIDO ITENS', 'VALOR TOTAL', 'STATUS FISCAL'],
+          renderTable(['FATURA', 'EMISSÃO', 'PEDIDO ORIGEM', 'CLIENTE', 'LÍQUIDO ITENS', 'VALOR TOTAL', 'ENTREGA', 'PAGAMENTO', 'AÇÕES'],
             filterByOwnership(database.fat).slice().reverse().map(f => [
               `<span class="num-serif">${f.n}</span><span class="sub-status">FATURADO</span>`,
               formatDate(f.data),
@@ -4671,7 +4782,9 @@
               `<b>${getEntityName('cli', f.cli).toUpperCase()}</b>`,
               formatCurrency(f.liq),
               `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(f.total)}</b>`,
-              '<span class="dot-warn">USO INTERNO</span>'
+              deliveryBadge(f),
+              paymentBadge(f),
+              invoiceActionsHtml(f)
             ]));
       },
 
@@ -4809,7 +4922,7 @@
         const currentTime = Date.now();
         const isPending = x => (x.valor - x.pago) > 0.004;
 
-        return renderHeader('FINANCEIRO', 'CONTAS A RECEBER', '') + `
+        return renderHeader('FINANCEIRO', 'PARCELAS E BAIXAS', '') + `
           <div class="cards">
             ${renderCard('Em aberto', formatCurrency(sumCollection(receivables, x => x.valor - x.pago)))}
             ${renderCard('Recebido', formatCurrency(sumCollection(receivables, x => x.pago)), 'ok')}
@@ -5837,13 +5950,296 @@
       refreshView();
     }
 
+    function localIso(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function formatSalesDate(iso) {
+      const [y, m, d] = String(iso).split('-');
+      return y && m && d ? `${d}/${m}/${y}` : '—';
+    }
+
+    function ensureSalesPeriod() {
+      if (salesFrom && salesTo) return;
+      const now = new Date();
+      salesFrom = localIso(new Date(now.getFullYear(), now.getMonth(), 1));
+      salesTo = localIso(now);
+    }
+
+    function setSalesPeriod(from, to) {
+      if (!from || !to) return showToast('Informe as duas datas do período.');
+      if (from > to) return showToast('A data inicial não pode ser maior que a final.');
+      salesFrom = from;
+      salesTo = to;
+      refreshView();
+    }
+
+    function quickSalesPeriod(kind) {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      if (kind === 'hoje') {
+        salesFrom = localIso(now);
+        salesTo = localIso(now);
+      } else if (kind === 'mes') {
+        salesFrom = localIso(new Date(y, m, 1));
+        salesTo = localIso(now);
+      } else if (kind === 'passado') {
+        salesFrom = localIso(new Date(y, m - 1, 1));
+        salesTo = localIso(new Date(y, m, 0));
+      } else {
+        salesFrom = localIso(new Date(y, 0, 1));
+        salesTo = localIso(now);
+      }
+      refreshView();
+    }
+
+    function recordTime(value) {
+      if (typeof value === 'string') {
+        const t = Date.parse(value);
+        return isNaN(t) ? 0 : t;
+      }
+      return Number(value) || 0;
+    }
+
+    function getBilledRecords() {
+      const fromInvoices = filterByOwnership(database.fat).map(f => {
+        const ped = database.ped.find(p => p.id === f.ped);
+        return {
+          inv: f,
+          fatNum: String(f.n),
+          pedNum: ped ? String(ped.n) : '—',
+          cli: f.cli,
+          vend: f.vend,
+          vendNome: ped ? getSellerDisplayName(ped) : getEntityName('users', f.vend),
+          data: f.data,
+          liq: Number(f.liq) || 0,
+          total: Number(f.total) || 0
+        };
+      });
+      const legacy = filterByOwnership(database.ped)
+        .filter(p => p.st === 'Faturado' && !database.fat.some(f => f.ped === p.id))
+        .map(p => ({
+          inv: null,
+          fatNum: 'PED',
+          pedNum: String(p.n),
+          cli: p.cli,
+          vend: p.vend,
+          vendNome: getSellerDisplayName(p),
+          data: p.data,
+          liq: sumCollection(p.itens, i => i.q * i.pu * (1 - i.d / 100)),
+          total: calculateOrderTotal(p)
+        }));
+      return [...fromInvoices, ...legacy];
+    }
+
+    function getSalesRows() {
+      ensureSalesPeriod();
+      const from = new Date(`${salesFrom}T00:00:00`).getTime();
+      const to = new Date(`${salesTo}T23:59:59.999`).getTime();
+      return getBilledRecords()
+        .filter(r => {
+          const t = recordTime(r.data);
+          return t >= from && t <= to;
+        })
+        .sort((a, b) => recordTime(b.data) - recordTime(a.data));
+    }
+
+    function exportSalesReport() {
+      const rows = getSalesRows();
+      if (!rows.length) return showToast('Não há vendas no período para exportar.');
+      const data = rows.map(r => {
+        const fin = r.inv ? invoiceFinance(r.inv) : null;
+        return {
+          'Fatura': r.fatNum,
+          'Pedido': r.pedNum,
+          'Data': formatDate(r.data),
+          'Cliente': getEntityName('cli', r.cli),
+          'Vendedor': r.vendNome,
+          'Líquido itens': Math.round(r.liq * 100) / 100,
+          'Total faturado': Math.round(r.total * 100) / 100,
+          'Recebido': fin ? fin.pago : '',
+          'Saldo a receber': fin ? fin.saldo : '',
+          'Entrega': r.inv ? (r.inv.ent ? formatDate(r.inv.ent) : 'A entregar') : '',
+          'Pagamento': fin ? (fin.paga ? 'Pago' : fin.pago > 0.004 ? 'Parcial' : 'Não pago') : ''
+        };
+      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Vendas');
+      XLSX.writeFile(wb, `relatorio-vendas-${salesFrom}-a-${salesTo}.xlsx`);
+    }
+
+    function invoiceFinance(inv) {
+      const parcelas = database.rec.filter(r => r.fat === inv.id);
+      const valor = Math.round(sumCollection(parcelas, r => r.valor) * 100) / 100;
+      const pago = Math.round(sumCollection(parcelas, r => r.pago) * 100) / 100;
+      const saldo = Math.round((valor - pago) * 100) / 100;
+      const abertas = parcelas.filter(r => r.valor - r.pago > 0.004).sort((a, b) => a.venc - b.venc);
+      return {
+        parcelas,
+        valor,
+        pago,
+        saldo,
+        paga: parcelas.length > 0 && saldo < 0.005,
+        proxVenc: abertas.length ? abertas[0].venc : null
+      };
+    }
+
+    function deliveryBadge(inv) {
+      return inv.ent
+        ? `<span class="dot-ok">ENTREGUE</span><br><small class="mut">${formatDate(inv.ent)}</small>`
+        : '<span class="dot-warn">A ENTREGAR</span>';
+    }
+
+    function paymentBadge(inv) {
+      const fin = invoiceFinance(inv);
+      if (!fin.parcelas.length) return '<span class="mut">—</span>';
+      if (fin.paga) {
+        return `<span class="dot-ok">PAGO</span>${inv.pagoEm ? `<br><small class="mut">${formatDate(inv.pagoEm)}</small>` : ''}`;
+      }
+      if (fin.pago > 0.004) {
+        return `<span class="dot-warn">PARCIAL</span><br><small class="mut">saldo ${formatCurrency(fin.saldo)}</small>`;
+      }
+      return '<span class="dot-bad">NÃO PAGO</span>';
+    }
+
+    function invoiceActionsHtml(inv, reopenOrderId = '') {
+      const ro = `'${reopenOrderId}'`;
+      const fin = invoiceFinance(inv);
+      const small = 'padding:5px 10px;font-size:12px';
+      const delivery = inv.ent
+        ? `<button class="secondary" style="${small}" onclick="undoInvoiceDelivery('${inv.id}', ${ro})">Desfazer entrega</button>`
+        : `<button style="${small}" onclick="confirmInvoiceDelivery('${inv.id}', ${ro})">${icon('save')} Confirmar entrega</button>`;
+      let payment = '';
+      if (isManager() && fin.parcelas.length) {
+        payment = fin.paga
+          ? (inv.pagoSnap ? `<button class="secondary" style="${small}" onclick="undoInvoicePayment('${inv.id}', ${ro})">Desfazer pagamento</button>` : '')
+          : `<button class="dark-btn" style="${small}" onclick="openInvoicePaymentConfirm('${inv.id}', ${ro})">${icon('dollar')} Confirmar pagamento</button>`;
+      }
+      return `<div style="display:flex;gap:6px;flex-wrap:wrap">${delivery}${payment}</div>`;
+    }
+
+    function orderFlowBadges(order) {
+      const invoices = database.fat.filter(f => f.ped === order.id);
+      if (!invoices.length) return '';
+      const delivered = invoices.every(f => f.ent);
+      const paid = invoices.every(f => invoiceFinance(f).paga);
+      return `<br><span class="${delivered ? 'dot-ok' : 'dot-warn'}">${delivered ? 'ENTREGUE' : 'A ENTREGAR'}</span><br><span class="${paid ? 'dot-ok' : 'dot-bad'}">${paid ? 'PAGO' : 'A RECEBER'}</span>`;
+    }
+
+    function renderOrderInvoices(order) {
+      const invoices = database.fat.filter(f => f.ped === order.id);
+      if (!invoices.length) return '';
+      return `
+        <p style="margin:16px 0 6px"><b>Faturas deste pedido</b></p>
+        ${renderTable(['FATURA', 'EMISSÃO', 'TOTAL', 'ENTREGA', 'PAGAMENTO', 'AÇÕES'], invoices.map(f => [
+          `<span class="num-serif">${escapeHtml(f.n)}</span>`,
+          formatDate(f.data),
+          `<b>${formatCurrency(f.total)}</b>`,
+          deliveryBadge(f),
+          paymentBadge(f),
+          invoiceActionsHtml(f, order.id)
+        ]), true)}`;
+    }
+
+    function finishInvoiceAction(reopenOrderId, message) {
+      refreshView();
+      if (reopenOrderId) openOrderDetails(reopenOrderId);
+      else closeModal();
+      showToast(message);
+    }
+
+    function confirmInvoiceDelivery(invoiceId, reopenOrderId = '') {
+      const inv = database.fat.find(f => f.id === invoiceId);
+      if (!inv || (!isManager() && inv.vend !== currentUser.id) || inv.ent) return;
+      inv.ent = Date.now();
+      inv.entPor = currentUser.nome;
+      addAuditLog(`Entrega confirmada da fatura ${inv.n}`);
+      saveData();
+      finishInvoiceAction(reopenOrderId, `Entrega da fatura ${inv.n} confirmada!`);
+    }
+
+    function undoInvoiceDelivery(invoiceId, reopenOrderId = '') {
+      const inv = database.fat.find(f => f.id === invoiceId);
+      if (!inv || (!isManager() && inv.vend !== currentUser.id) || !inv.ent) return;
+      delete inv.ent;
+      delete inv.entPor;
+      addAuditLog(`Entrega desfeita da fatura ${inv.n}`);
+      saveData();
+      finishInvoiceAction(reopenOrderId, `Entrega da fatura ${inv.n} desfeita.`);
+    }
+
+    function openInvoicePaymentConfirm(invoiceId, reopenOrderId = '') {
+      const inv = database.fat.find(f => f.id === invoiceId);
+      if (!inv || !isManager()) return;
+      const fin = invoiceFinance(inv);
+      if (fin.saldo < 0.005) return showToast('Esta fatura já está paga.');
+      const ped = database.ped.find(p => p.id === inv.ped);
+      const abertas = fin.parcelas.filter(r => r.valor - r.pago > 0.004).length;
+      openModal(`
+        <h3>Confirmar pagamento</h3>
+        <p>Fatura <b>${escapeHtml(inv.n)}</b> · Pedido <b>#${escapeHtml(ped ? ped.n : '—')}</b><br>
+        <b>${getEntityName('cli', inv.cli).toUpperCase()}</b></p>
+        <p>Será registrado o recebimento do saldo de
+          <b style="font-family:var(--font-serif);font-size:20px;color:var(--ok)">${formatCurrency(fin.saldo)}</b>
+          (${abertas} parcela${abertas > 1 ? 's' : ''} em aberto), com a data de hoje.</p>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="dark-btn" onclick="applyInvoicePayment('${inv.id}', '${reopenOrderId}')">${icon('dollar')} Sim, pagamento recebido</button>
+          <button class="secondary" onclick="${reopenOrderId ? `openOrderDetails('${reopenOrderId}')` : 'closeModal()'}">Cancelar</button>
+        </div>`);
+    }
+
+    function applyInvoicePayment(invoiceId, reopenOrderId = '') {
+      const inv = database.fat.find(f => f.id === invoiceId);
+      if (!inv || !isManager()) return;
+      const fin = invoiceFinance(inv);
+      if (fin.saldo < 0.005) return;
+      const snapshot = {};
+      fin.parcelas.forEach(r => {
+        if (r.valor - r.pago > 0.004) {
+          snapshot[r.id] = r.pago;
+          r.pago = r.valor;
+        }
+      });
+      inv.pagoSnap = snapshot;
+      inv.pagoEm = Date.now();
+      inv.pagoPor = currentUser.nome;
+      evaluateCommissions();
+      addAuditLog(`Pagamento confirmado da fatura ${inv.n}: ${formatCurrency(fin.saldo)}`);
+      saveData();
+      finishInvoiceAction(reopenOrderId, `Pagamento da fatura ${inv.n} confirmado!`);
+    }
+
+    function undoInvoicePayment(invoiceId, reopenOrderId = '') {
+      const inv = database.fat.find(f => f.id === invoiceId);
+      if (!inv || !isManager() || !inv.pagoSnap) return;
+      const commission = database.com.find(c => c.fat === inv.id);
+      if (commission && commission.st === 'Paga') {
+        return showToast('A comissão desta fatura já foi paga; não é possível desfazer o pagamento.');
+      }
+      Object.entries(inv.pagoSnap).forEach(([receiptId, before]) => {
+        const receipt = database.rec.find(r => r.id === receiptId);
+        if (receipt) receipt.pago = before;
+      });
+      delete inv.pagoSnap;
+      delete inv.pagoEm;
+      delete inv.pagoPor;
+      if (commission && commission.st === 'Liberada' && database.cfg.liberaApos) commission.st = 'Apurada';
+      evaluateCommissions();
+      addAuditLog(`Pagamento desfeito da fatura ${inv.n}`);
+      saveData();
+      finishInvoiceAction(reopenOrderId, `Pagamento da fatura ${inv.n} desfeito.`);
+    }
+
     function convertToOrder(quoteId) {
       const quote = database.orc.find(x => x.id === quoteId);
-      if (!quote || quote.ped || quote.st !== 'Aprovado pelo cliente' || (!isManager() && quote.vend !== currentUser.id)) return null;
+      if (!quote || quote.ped || (!isManager() && quote.vend !== currentUser.id)) return null;
+
+      const numberTaken = database.ped.some(p => p.n === quote.n);
 
       const order = {
         id: nextId(),
-        n: nextSeqNumber('p'),
+        n: numberTaken ? nextSeqNumber('p') : quote.n,
         orc: quote.id,
         cli: quote.cli,
         vend: quote.vend,
@@ -5869,7 +6265,9 @@
       addAuditLog(`Orçamento ${quote.n} convertido no pedido ${order.n}`);
       saveData();
       refreshView();
-      showToast(`Pedido ${order.n} gerado!`);
+      showToast(numberTaken
+        ? `Pedido ${order.n} gerado! O número ${quote.n} já estava em uso por outro pedido.`
+        : `Pedido ${order.n} gerado com o mesmo número do orçamento!`);
       return order;
     }
 
@@ -5894,6 +6292,7 @@
           ];
         }), true)}
         <p style="font-size:17px">Total: <b style="font-family:var(--font-serif);color:var(--pri);font-size:22px">${formatCurrency(calculateOrderTotal(order))}</b></p>
+        ${renderOrderInvoices(order)}
         <p class="mut" style="font-size:12px">Histórico: ${order.hist.map(h => `${formatDate(h[0])} ${escapeHtml(h[2])}`).join(' · ')}</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
