@@ -1950,6 +1950,7 @@
   <input type="file" id="client-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleClientExcelUpload(event)">
   <input type="file" id="cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleCostUpload(event)">
   <input type="file" id="order-cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleOrderCostUpload(event)">
+  <input type="file" id="price-file-input" accept=".xlsx,.xls" style="display:none" onchange="handlePriceUpload(event)">
   <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
 
   <script>
@@ -2881,7 +2882,6 @@
     const APP_NAVIGATION = [
       ['home', 'Início', icon('home'), false],
       ['prod', 'Catálogo', icon('box'), false],
-      ['precos', 'Preços por Categoria', icon('dollar'), true],
       ['orc', 'Orçamentos', icon('tag'), false],
       ['ped', 'Vendas / Pedidos', icon('cart'), false],
       ['cli', 'Clientes', icon('users'), false],
@@ -3233,451 +3233,189 @@
       if (entering) animateKpis(main);
     }
 
-    let priceTool = { cat: '', bitola: '', un: '', texto: '', modo: 'fixo', valor: '' };
-    let lastPriceChange = null;
-    let pricePending = null;
-    const PRICE_PREVIEW_LIMIT = 200;
+    const SALE_SOURCE_LABEL = { cobre: 'Cobre 5', telecom: 'Telecom 5', aluminio: 'Alumínio 5' };
+    let salePricePlan = null;
 
-    const PRICE_MODES = {
-      fixo:   { label: 'Preço único (igual para todos)',      campo: 'Novo preço de venda (R$)',        ph: 'Ex: 2,90' },
-      pct:    { label: 'Reajuste em % (negativo reduz)',      campo: 'Percentual (%)',                  ph: 'Ex: 5  ou  -3' },
-      soma:   { label: 'Somar / subtrair um valor em R$',     campo: 'Valor a somar (R$)',              ph: 'Ex: 0,20  ou  -0,10' },
-      margem: { label: 'Margem sobre o custo (%)',            campo: 'Margem desejada sobre a venda (%)', ph: 'Ex: 35' }
-    };
-
-    const ptCategory = p => String(p.cat || '').trim() || 'SEM CATEGORIA';
-    const ptNorm = s => String(s || '').toUpperCase().replace(/,/g, '.');
-
-    function ptBitola(p) {
-      const m = String(p.nome || '').match(/(\d+(?:[.,]\d+)?)\s*MM/i);
-      if (!m) return '';
-      const n = parseFloat(m[1].replace(',', '.'));
-      if (!isFinite(n) || n <= 0) return '';
-      return Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ',');
+    function classifyPriceSheet(name) {
+      const n = String(name || '').trim();
+      if (/^TAB\s+AL\s+5$/i.test(n)) return 'aluminio';
+      if (/^TELECOM\s+5$/i.test(n)) return 'telecom';
+      if (/^TAB\s+5\b/i.test(n)) return 'cobre';
+      return null;
     }
 
-    const ptGroups = () => (Array.isArray(database.grupos) ? database.grupos : (database.grupos = []));
-    const ptGroupCount = g => g.ids.filter(id => database.prod.some(p => p.id === id)).length;
-    function ptInCat(p, cat) {
-      if (!cat) return true;
-      if (cat.startsWith('grp:')) {
-        const g = ptGroups().find(x => x.id === cat.slice(4));
-        return !!g && g.ids.includes(p.id);
+    function triggerPriceUpload() {
+      const input = getEl('price-file-input');
+      if (input) {
+        input.value = '';
+        input.click();
       }
-      return ptCategory(p) === cat;
     }
 
-    const ptHasScope = () => !!(priceTool.cat || priceTool.bitola || String(priceTool.texto).trim());
+    function readSalePrices(wb) {
+      const sheetName = wb.SheetNames.find(n => n.trim().toLowerCase() === 'marketup')
+        || wb.SheetNames.find(n => n.toLowerCase().includes('marketup'));
+      if (!sheetName) return { error: 'A aba MARKETUP não foi encontrada nesta planilha.' };
 
-    function ptSelection() {
-      const t = ptNorm(priceTool.texto).trim();
-      return database.prod.filter(p => {
-        if (!ptInCat(p, priceTool.cat)) return false;
-        if (priceTool.bitola && ptBitola(p) !== priceTool.bitola) return false;
-        if (priceTool.un && String(p.un || '').toUpperCase() !== priceTool.un) return false;
-        if (t && !(ptNorm(p.nome) + ' ' + ptNorm(p.sku)).includes(t)) return false;
-        return true;
-      });
-    }
+      const ws = wb.Sheets[sheetName];
+      if (!ws || !ws['!ref']) return { error: 'A aba MARKETUP está vazia.' };
+      const range = XLSX.utils.decode_range(ws['!ref']);
 
-    function ptNewPrice(p, modo, v) {
-      const atual = Number(p.preco) || 0;
-      const custo = Number(p.custo) || 0;
-      let n = NaN;
-      if (modo === 'fixo') n = v;
-      else if (modo === 'pct') n = atual * (1 + v / 100);
-      else if (modo === 'soma') n = atual + v;
-      else if (modo === 'margem') n = (v >= 0 && v < 100 && custo > 0) ? custo / (1 - v / 100) : NaN;
-      return Math.round(n * 100) / 100;
-    }
-
-    function ptCompute() {
-      const sel = ptSelection();
-      const raw = String(priceTool.valor ?? '').trim();
-      const v = raw === '' ? NaN : parseNumberPtBr(raw);
-      const hasValue = Number.isFinite(v) && (priceTool.modo !== 'fixo' || v > 0);
-      const rows = sel.map(p => {
-        const atual = Number(p.preco) || 0;
-        const custo = Number(p.custo) || 0;
-        let novo = NaN, status = 'sem-valor';
-        if (hasValue) {
-          novo = ptNewPrice(p, priceTool.modo, v);
-          if (!Number.isFinite(novo) || novo <= 0) status = 'invalido';
-          else if (novo === atual) status = 'igual';
-          else if (custo > 0 && novo < custo) status = 'abaixo';
-          else status = 'ok';
+      let headerRow = -1;
+      let skuCol = -1;
+      let priceCol = -1;
+      for (let r = range.s.r; r <= Math.min(range.e.r, range.s.r + 5) && headerRow < 0; r++) {
+        let sc = -1;
+        let pc = -1;
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const cell = ws[XLSX.utils.encode_cell({ r, c })];
+          const label = cell ? normText(String(cell.v ?? '')).trim() : '';
+          if (label === 'codigo de barras') sc = c;
+          if (label === 'preco venda varejo') pc = c;
         }
-        return { p, atual, custo, novo, status };
-      });
-      return {
-        sel, rows, v, hasValue,
-        changes: rows.filter(r => r.status === 'ok' || r.status === 'abaixo'),
-        below: rows.filter(r => r.status === 'abaixo').length,
-        invalid: rows.filter(r => r.status === 'invalido').length,
-        units: [...new Set(sel.map(p => String(p.un || '').toUpperCase()).filter(Boolean))]
+        if (sc >= 0 && pc >= 0) {
+          headerRow = r;
+          skuCol = sc;
+          priceCol = pc;
+        }
+      }
+      if (headerRow < 0) {
+        return { error: 'Não encontrei as colunas "Código de Barras" e "Preço Venda Varejo" na aba MARKETUP.' };
+      }
+
+      const refPattern = /^\s*=?\s*(?:'([^']+)'|([A-Za-z0-9_]+))!\$?([A-Z]{1,3})\$?(\d+)\s*(?:\*\s*(\d+(?:\.\d+)?))?\s*$/;
+      const items = [];
+      let ignored = 0;
+
+      for (let r = headerRow + 1; r <= range.e.r; r++) {
+        const skuCell = ws[XLSX.utils.encode_cell({ r, c: skuCol })];
+        const sku = skuCell ? String(skuCell.v ?? '').trim().toUpperCase() : '';
+        if (!sku) continue;
+
+        const priceCell = ws[XLSX.utils.encode_cell({ r, c: priceCol })];
+        const m = priceCell && typeof priceCell.f === 'string' ? priceCell.f.match(refPattern) : null;
+        const refName = m ? (m[1] || m[2]) : '';
+        const source = m ? classifyPriceSheet(refName) : null;
+        if (!source) {
+          ignored++;
+          continue;
+        }
+
+        const refCell = wb.Sheets[refName] ? wb.Sheets[refName][m[3] + m[4]] : null;
+        const mult = m[5] ? Number(m[5]) : 1;
+        let price = refCell && typeof refCell.v === 'number' ? refCell.v * mult : NaN;
+        if (!(price > 0) && typeof priceCell.v === 'number') price = priceCell.v;
+        if (!(price > 0)) {
+          ignored++;
+          continue;
+        }
+        items.push({ sku, price: Math.round(price * 1e6) / 1e6, source });
+      }
+      return { sheetName, items, ignored };
+    }
+
+    function handlePriceUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file || !isManager()) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const data = readSalePrices(wb);
+          if (data.error) return showToast(data.error);
+          if (!data.items.length) {
+            return showToast('Nenhum preço ligado às tabelas Cobre 5, Telecom 5 ou Alumínio 5 foi encontrado na aba MARKETUP.');
+          }
+          renderSalePricePreview(data, file.name);
+        } catch (err) {
+          console.error(err);
+          showToast('Erro ao ler a planilha. Verifique se é um arquivo .xlsx válido.');
+        }
       };
+      reader.readAsArrayBuffer(file);
     }
 
-    function ptScopeParts() {
-      const parts = [];
-      if (priceTool.cat) {
-        const g = priceTool.cat.startsWith('grp:') ? ptGroups().find(x => x.id === priceTool.cat.slice(4)) : null;
-        parts.push(g ? g.nome : priceTool.cat);
-      }
-      if (priceTool.bitola) parts.push(`${priceTool.bitola} mm`);
-      if (priceTool.un) parts.push(`unidade ${priceTool.un}`);
-      if (String(priceTool.texto).trim()) parts.push(`nome contém "${String(priceTool.texto).trim()}"`);
-      return parts;
-    }
+    function renderSalePricePreview(data, fileName) {
+      const bySku = new Map(database.prod.map(p => [String(p.sku).trim().toUpperCase(), p]));
+      const changes = [];
+      const notFound = [];
+      let same = 0;
 
-    function ptModeText(c) {
-      const num = String(c.v).replace('.', ',');
-      if (priceTool.modo === 'fixo') return `novo preço de ${formatCurrency(c.v)} para todos`;
-      if (priceTool.modo === 'pct') return `reajuste de ${c.v > 0 ? '+' : ''}${num}%`;
-      if (priceTool.modo === 'soma') return `${c.v >= 0 ? 'somar' : 'subtrair'} ${formatCurrency(Math.abs(c.v))} do preço atual`;
-      return `preço recalculado para margem de ${num}% sobre o custo`;
-    }
-
-    const ptNote = (kind, text) =>
-      `<div class="card" style="margin-bottom:12px;padding:12px 16px;border-left:4px solid var(--${kind});font-size:13px">${text}</div>`;
-
-    function ptRoot() {
-      if (!database.prod.length) {
-        return `<div class="card"><p class="mut" style="margin:0">O catálogo está vazio. Importe a planilha de produtos primeiro (aba Catálogo).</p></div>`;
-      }
-      if (priceTool.cat.startsWith('grp:') && !ptGroups().some(g => g.id === priceTool.cat.slice(4))) priceTool.cat = '';
-      const catCount = {};
-      database.prod.forEach(p => { const k = ptCategory(p); catCount[k] = (catCount[k] || 0) + 1; });
-      const catNames = Object.keys(catCount).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-      const bitCount = {};
-      database.prod.forEach(p => {
-        if (!ptInCat(p, priceTool.cat)) return;
-        const b = ptBitola(p);
-        if (b) bitCount[b] = (bitCount[b] || 0) + 1;
+      data.items.forEach(it => {
+        const prod = bySku.get(it.sku);
+        if (!prod) {
+          notFound.push(it.sku);
+          return;
+        }
+        const de = Number(prod.preco) || 0;
+        if (Math.abs(de - it.price) < 0.005) {
+          same++;
+          return;
+        }
+        changes.push({ prod, de, para: it.price, source: it.source });
       });
-      const bitNames = Object.keys(bitCount).sort((a, b) => parseFloat(a.replace(',', '.')) - parseFloat(b.replace(',', '.')));
-      const unitNames = [...new Set(database.prod.map(p => String(p.un || '').toUpperCase()).filter(Boolean))].sort();
 
-      const opt = (val, label, cur) => `<option value="${escapeHtml(val)}"${val === cur ? ' selected' : ''}>${escapeHtml(label)}</option>`;
-      const mode = PRICE_MODES[priceTool.modo];
+      const perSource = { cobre: 0, telecom: 0, aluminio: 0 };
+      changes.forEach(c => { perSource[c.source]++; });
+      const belowCost = changes.filter(c => (Number(c.prod.custo) || 0) > c.para).length;
+      salePricePlan = { changes, fileName, sheetName: data.sheetName };
 
-      return `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-bottom:18px">
-          <div class="card form-layout">
-            <h3 class="panel-title">1 · Quais produtos?</h3>
-            <label>Categoria</label>
-            <select onchange="ptSet('cat', this.value)">
-              ${opt('', `Todas as categorias (${database.prod.length})`, priceTool.cat)}
-              ${ptGroups().length ? `<optgroup label="Minhas categorias">${ptGroups().map(g => opt('grp:' + g.id, `${g.nome} (${ptGroupCount(g)})`, priceTool.cat)).join('')}</optgroup>` : ''}
-              <optgroup label="Categorias da planilha">${catNames.map(c => opt(c, `${c} (${catCount[c]})`, priceTool.cat)).join('')}</optgroup>
-            </select>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <div>
-                <label>Bitola (mm)</label>
-                <select onchange="ptSet('bitola', this.value)">
-                  ${opt('', 'Todas as bitolas', priceTool.bitola)}
-                  ${bitNames.map(b => opt(b, `${b} mm (${bitCount[b]})`, priceTool.bitola)).join('')}
-                </select>
-              </div>
-              <div>
-                <label>Unidade</label>
-                <select onchange="ptSet('un', this.value)">
-                  ${opt('', 'Todas', priceTool.un)}
-                  ${unitNames.map(u => opt(u, u, priceTool.un)).join('')}
-                </select>
-              </div>
-            </div>
-            <label>Nome ou código contém (opcional)</label>
-            <input placeholder="Ex: PRETO, AZUL, VM250" value="${escapeHtml(priceTool.texto)}" oninput="ptInput('texto', this.value)">
-            <p class="mut" style="margin:10px 0 0;font-size:12px">A bitola é lida do nome do produto (ex.: “CABO FLEXÍVEL 1,5MM”). Metro e rolo têm preços diferentes — use o filtro de unidade.</p>
-          </div>
+      const rows = changes.slice(0, 80).map(c => {
+        const pct = c.de > 0 ? ((c.para / c.de) - 1) * 100 : 0;
+        return `
+        <tr>
+          <td><span class="sku-pill">${escapeHtml(c.prod.sku)}</span></td>
+          <td>${escapeHtml(c.prod.nome)}</td>
+          <td>${SALE_SOURCE_LABEL[c.source]}</td>
+          <td style="text-align:right">${formatCurrency(c.de)}</td>
+          <td style="text-align:right"><b>${formatCurrency(c.para)}</b></td>
+          <td style="text-align:right" class="${pct >= 0 ? '' : 'mut'}">${c.de > 0 ? `${pct > 0 ? '+' : ''}${formatNumber(pct, 1)}%` : '—'}</td>
+        </tr>`;
+      }).join('');
 
-          <div class="card form-layout">
-            <h3 class="panel-title">2 · Qual preço?</h3>
-            <label>Como alterar</label>
-            <select onchange="ptSet('modo', this.value)">
-              ${Object.keys(PRICE_MODES).map(k => opt(k, PRICE_MODES[k].label, priceTool.modo)).join('')}
-            </select>
-            <label>${mode.campo}</label>
-            <input inputmode="decimal" placeholder="${mode.ph}" value="${escapeHtml(priceTool.valor)}" oninput="ptInput('valor', this.value)">
-            <p class="mut" style="margin:10px 0 0;font-size:12px">Orçamentos e pedidos já lançados mantêm o preço antigo. Só os próximos usam o novo.</p>
-          </div>
-
-          <div class="card form-layout">
-            <h3 class="panel-title">Minhas categorias</h3>
-            <p class="mut" style="margin:0 0 12px;font-size:12px">Monte uma categoria escolhendo os produtos que quiser, de qualquer categoria da planilha. Ela fica salva e não é apagada ao importar a planilha de novo.</p>
-            ${ptGroups().length ? ptGroups().map(g => `
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--bd)">
-                <div style="flex:1;min-width:140px"><b>${escapeHtml(g.nome)}</b><br><small class="mut">${ptGroupCount(g)} produto(s)</small></div>
-                <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptSet('cat','grp:${g.id}')">Usar nos preços</button>
-                <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptOpenGroup('${g.id}')">${icon('edit')} Editar</button>
-                <button class="danger-outline" style="padding:5px 10px;font-size:12px" onclick="ptGroupDeleteConfirm('${g.id}')">${icon('trash')} Excluir</button>
-              </div>`).join('') : '<p class="mut" style="font-size:13px">Nenhuma categoria criada ainda.</p>'}
-            <button style="margin-top:12px" onclick="ptOpenGroup()">${icon('tag')} Criar nova categoria</button>
-          </div>
-        </div>
-        <div id="pt_preview">${ptPreview()}</div>`;
-    }
-
-    function ptPreview() {
-      const c = ptCompute();
-      const needScope = priceTool.modo === 'fixo' && !ptHasScope();
-      const canApply = c.hasValue && c.changes.length > 0 && !needScope;
-
-      let notes = '';
-      if (needScope) notes += ptNote('warn', 'Para definir um preço único, escolha ao menos uma categoria, bitola ou parte do nome. Assim você não muda o catálogo inteiro sem querer.');
-      if (c.units.length > 1) notes += ptNote('warn', `Esta seleção mistura unidades (${escapeHtml(c.units.join(', '))}). Metro e rolo costumam ter preços diferentes: use o filtro “Unidade” para alterar só uma delas.`);
-      if (c.below) notes += ptNote('bad', `${c.below} produto(s) ficariam com preço abaixo do custo.`);
-      if (c.invalid) notes += ptNote('warn', `${c.invalid} produto(s) não aceitam esse valor (preço zerado/negativo, ou sem custo para calcular a margem) e serão ignorados.`);
-
-      const statusCell = r => ({
-        ok: '<span class="dot-ok">Alterar</span>',
-        abaixo: '<span class="dot-bad">Abaixo do custo</span>',
-        igual: '<span class="mut">Sem mudança</span>',
-        invalido: '<span class="dot-warn">Ignorado</span>',
-        'sem-valor': '<span class="mut">—</span>'
-      })[r.status];
-
-      const shown = c.rows.slice(0, PRICE_PREVIEW_LIMIT);
-      const table = renderTable(
-        ['CÓDIGO', 'PRODUTO', 'BITOLA', 'UN.', 'CUSTO', 'PREÇO ATUAL', 'NOVO PREÇO', 'VARIAÇÃO', 'SITUAÇÃO'],
-        shown.map(r => {
-          const okNovo = Number.isFinite(r.novo) && r.status !== 'invalido';
-          const diff = okNovo && r.atual > 0 ? (r.novo / r.atual - 1) * 100 : null;
-          return [
-            `<span class="sku-pill">${escapeHtml(r.p.sku)}</span>`,
-            `<b>${escapeHtml(String(r.p.nome || '').toUpperCase())}</b>${isProductActive(r.p) ? '' : '<br><small class="mut">inativo</small>'}`,
-            ptBitola(r.p) ? `${ptBitola(r.p)} mm` : '—',
-            escapeHtml(r.p.un || ''),
-            r.custo > 0 ? formatCurrency(r.custo) : '—',
-            formatCurrency(r.atual),
-            okNovo ? `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(r.novo)}</b>` : '—',
-            diff === null ? '—' : `${diff > 0 ? '+' : ''}${diff.toFixed(1).replace('.', ',')}%`,
-            statusCell(r)
-          ];
-        }),
-        true
-      );
-
-      const undo = lastPriceChange
-        ? `<button class="secondary" onclick="ptUndo()">${icon('refresh')} Desfazer última alteração (${lastPriceChange.items.length} produtos)</button>`
-        : '';
-
-      return `
-        ${notes}
-        <div class="cards">
-          ${renderCard('Produtos na seleção', c.sel.length)}
-          ${renderCard('Serão alterados', c.hasValue ? c.changes.length : '—')}
-          ${renderCard('Abaixo do custo', c.hasValue ? c.below : '—', c.below ? 'bad' : '')}
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 18px">
-          <button onclick="ptConfirm()" ${canApply ? '' : 'disabled style="opacity:.45;cursor:not-allowed"'}>${icon('save')} Aplicar novo preço em ${c.changes.length} produto(s)</button>
-          ${undo}
-        </div>
-        ${table}
-        ${c.sel.length > PRICE_PREVIEW_LIMIT ? `<p class="mut" style="font-size:12px;margin-top:-12px">Mostrando ${PRICE_PREVIEW_LIMIT} de ${c.sel.length} produtos. A alteração vale para todos os da seleção.</p>` : ''}`;
-    }
-
-    function ptSet(key, val) {
-      priceTool[key] = val;
-      if (key === 'cat' && priceTool.bitola) {
-        const stillExists = database.prod.some(p => ptInCat(p, val) && ptBitola(p) === priceTool.bitola);
-        if (!stillExists) priceTool.bitola = '';
-      }
-      const root = getEl('pt_root');
-      if (root) root.innerHTML = ptRoot();
-    }
-
-    function ptInput(key, val) {
-      priceTool[key] = val;
-      const box = getEl('pt_preview');
-      if (box) box.innerHTML = ptPreview();
-    }
-
-    function ptConfirm() {
-      if (!isManager()) return;
-      const c = ptCompute();
-      if (!c.hasValue || !c.changes.length) return showToast('Informe um valor válido para ver quais produtos serão alterados.');
-      if (priceTool.modo === 'fixo' && !ptHasScope()) return showToast('Escolha uma categoria, bitola ou parte do nome antes de definir um preço único.');
-
-      const scope = ptScopeParts().join(' · ') || 'Todo o catálogo';
-      pricePending = {
-        items: c.changes.map(r => ({ id: r.p.id, para: r.novo })),
-        desc: `${scope} — ${ptModeText(c)}`
-      };
       openModal(`
-        <h3>Confirmar alteração de preços</h3>
-        <p style="font-size:14px;line-height:1.6">
-          <b>${escapeHtml(scope)}</b><br>
-          ${escapeHtml(ptModeText(c))}<br>
-          Serão alterados <b>${c.changes.length} produto(s)</b>.
+        <h3>Preço de venda — Cobre 5 · Telecom 5 · Alumínio 5</h3>
+        <p class="mut" style="font-size:12px;margin:4px 0 12px">
+          Lido da aba <b>${escapeHtml(data.sheetName)}</b> de ${escapeHtml(fileName)}. Cada produto recebe o valor da tabela 5% a que está ligado
+          (rolos e bobinas já vêm multiplicados pela metragem). Só o preço de venda muda.
         </p>
-        ${c.below ? `<p class="bad" style="font-size:13px"><b>Atenção:</b> ${c.below} produto(s) ficarão com preço abaixo do custo.</p>` : ''}
-        <p class="mut" style="font-size:12px">Orçamentos e pedidos já lançados mantêm o preço antigo. Logo depois você poderá desfazer.</p>
-        <div style="display:flex;gap:10px;margin-top:18px">
-          <button onclick="ptApply()">${icon('save')} Sim, aplicar novos preços</button>
-          <button class="secondary" onclick="pricePending=null;closeModal()">Cancelar</button>
-        </div>
-      `);
-    }
-
-    async function ptApply() {
-      if (!isManager() || !pricePending) return;
-      const { items, desc } = pricePending;
-      const snapshot = [];
-      items.forEach(it => {
-        const p = database.prod.find(x => x.id === it.id);
-        if (!p) return;
-        snapshot.push({ id: p.id, de: Number(p.preco) || 0 });
-        p.preco = it.para;
-      });
-      lastPriceChange = { desc, items: snapshot, t: Date.now() };
-      pricePending = null;
-      priceTool.valor = '';
-      addAuditLog(`Preços em lote: ${desc} (${snapshot.length} produtos alterados)`);
-      await saveData();
-      closeModal();
-      refreshView();
-      showToast(`Preços atualizados em ${snapshot.length} produto(s).`);
-    }
-
-    async function ptUndo() {
-      if (!isManager() || !lastPriceChange) return;
-      let restored = 0;
-      lastPriceChange.items.forEach(it => {
-        const p = database.prod.find(x => x.id === it.id);
-        if (p) { p.preco = it.de; restored++; }
-      });
-      addAuditLog(`Preços em lote desfeitos: ${lastPriceChange.desc} (${restored} produtos restaurados)`);
-      lastPriceChange = null;
-      await saveData();
-      refreshView();
-      showToast(`Alteração desfeita: ${restored} produto(s) voltaram ao preço anterior.`);
-    }
-
-    let groupDraft = null;
-
-    function ptOpenGroup(id = '') {
-      if (!isManager()) return;
-      const g = id ? ptGroups().find(x => x.id === id) : null;
-      groupDraft = { id: g ? g.id : '', nome: g ? g.nome : '', ids: new Set(g ? g.ids : []), q: '', cat: '' };
-      const cats = [...new Set(database.prod.map(ptCategory))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      openModal(`
-        <h3>${g ? 'Editar categoria' : 'Nova categoria'}</h3>
-        <div class="form-layout">
-          <label>Nome da categoria *</label>
-          <input id="gd_nome" placeholder="Ex: Cabos 1,50 mm" value="${escapeHtml(groupDraft.nome)}" oninput="groupDraft.nome=this.value">
-          <label>Escolha os produtos</label>
-          <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
-            <input id="gd_q" placeholder="Buscar por nome ou código (ex: 1,5 ou PRETO)" oninput="ptGroupFilter()">
-            <select id="gd_cat" onchange="ptGroupFilter()">
-              <option value="">Todas as categorias</option>
-              ${cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
-            </select>
+        <p style="margin:0 0 12px">
+          <b>${changes.length}</b> preço(s) vão mudar
+          (Cobre 5: ${perSource.cobre} · Telecom 5: ${perSource.telecom} · Alumínio 5: ${perSource.aluminio})
+          · ${same} já estão iguais · ${notFound.length} código(s) não cadastrado(s)
+        </p>
+        ${belowCost ? `<p class="dot-bad" style="margin:0 0 12px">${belowCost} produto(s) ficariam com preço de venda abaixo do custo atual.</p>` : ''}
+        ${changes.length ? `
+          <div style="max-height:320px;overflow:auto">
+            <table>
+              <thead><tr><th>CÓDIGO</th><th>PRODUTO</th><th>TABELA</th><th style="text-align:right">PREÇO ATUAL</th><th style="text-align:right">NOVO PREÇO</th><th style="text-align:right">VARIAÇÃO</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0">
-            <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptGroupMark(true)">Marcar todos os filtrados</button>
-            <button class="secondary" style="padding:5px 10px;font-size:12px" onclick="ptGroupMark(false)">Desmarcar filtrados</button>
-            <span id="gd_count" class="mut" style="font-size:13px"></span>
-          </div>
-          <div id="gd_list" style="max-height:320px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:4px 8px"></div>
-        </div>
+          ${changes.length > 80 ? `<p class="mut" style="font-size:12px">Mostrando 80 de ${changes.length}.</p>` : ''}
+        ` : '<p class="mut">Nenhum preço precisa mudar.</p>'}
+        ${notFound.length ? `<p class="mut" style="font-size:12px;margin-top:12px">Não cadastrados no sistema (ignorados): ${escapeHtml(notFound.slice(0, 25).join(', '))}${notFound.length > 25 ? '…' : ''}</p>` : ''}
+        ${data.ignored ? `<p class="mut" style="font-size:12px;margin-top:8px">${data.ignored} linha(s) da MARKETUP não usam as tabelas 5% (preço fixo ou outra tabela) e foram ignoradas.</p>` : ''}
         <div style="display:flex;gap:10px;margin-top:18px">
-          <button onclick="ptGroupSave()">${icon('save')} Salvar categoria</button>
-          <button class="secondary" onclick="groupDraft=null;closeModal()">Cancelar</button>
-        </div>
-      `);
-      ptGroupFilter();
-    }
-
-    function ptGroupFiltered() {
-      const t = ptNorm(groupDraft.q).trim();
-      return database.prod.filter(p => {
-        if (groupDraft.cat && ptCategory(p) !== groupDraft.cat) return false;
-        return !t || (ptNorm(p.nome) + ' ' + ptNorm(p.sku)).includes(t);
-      });
-    }
-
-    function ptGroupCountLabel() {
-      const el = getEl('gd_count');
-      if (el) el.textContent = `${groupDraft.ids.size} produto(s) marcado(s)`;
-    }
-
-    function ptGroupFilter() {
-      if (!groupDraft) return;
-      groupDraft.q = getVal('gd_q');
-      groupDraft.cat = getVal('gd_cat');
-      const list = ptGroupFiltered();
-      const shown = list.slice(0, 300);
-      getEl('gd_list').innerHTML = shown.length
-        ? shown.map(p => `
-            <label style="display:flex;gap:8px;align-items:center;padding:5px 2px;cursor:pointer;font-size:13px">
-              <input type="checkbox" style="width:16px;height:16px;flex:none" ${groupDraft.ids.has(p.id) ? 'checked' : ''} onchange="ptGroupToggle('${escapeHtml(p.id)}', this.checked)">
-              <span class="sku-pill">${escapeHtml(p.sku)}</span>
-              <span style="flex:1">${escapeHtml(String(p.nome || '').toUpperCase())}</span>
-              <small class="mut">${escapeHtml(p.un || '')} · ${formatCurrency(p.preco)}</small>
-            </label>`).join('') +
-          (list.length > shown.length ? `<p class="mut" style="font-size:12px;margin:6px 0">Mostrando ${shown.length} de ${list.length}. Refine a busca ou use “Marcar todos os filtrados” para marcar todos os ${list.length}.</p>` : '')
-        : '<p class="mut" style="font-size:13px;margin:8px 0">Nenhum produto encontrado.</p>';
-      ptGroupCountLabel();
-    }
-
-    function ptGroupToggle(id, on) {
-      if (!groupDraft) return;
-      if (on) groupDraft.ids.add(id); else groupDraft.ids.delete(id);
-      ptGroupCountLabel();
-    }
-
-    function ptGroupMark(on) {
-      if (!groupDraft) return;
-      ptGroupFiltered().forEach(p => { if (on) groupDraft.ids.add(p.id); else groupDraft.ids.delete(p.id); });
-      ptGroupFilter();
-    }
-
-    async function ptGroupSave() {
-      if (!isManager() || !groupDraft) return;
-      const nome = String(groupDraft.nome || '').trim();
-      if (!nome) return showToast('Dê um nome para a categoria.');
-      if (!groupDraft.ids.size) return showToast('Marque ao menos um produto.');
-      if (ptGroups().some(g => g.id !== groupDraft.id && g.nome.trim().toLowerCase() === nome.toLowerCase())) {
-        return showToast('Já existe uma categoria com esse nome.');
-      }
-      const ids = [...groupDraft.ids];
-      const existing = groupDraft.id ? ptGroups().find(g => g.id === groupDraft.id) : null;
-      if (existing) { existing.nome = nome; existing.ids = ids; }
-      else ptGroups().push({ id: nextId(), nome, ids });
-      addAuditLog(`Categoria "${nome}" ${existing ? 'atualizada' : 'criada'} (${ids.length} produtos)`);
-      groupDraft = null;
-      await saveData();
-      closeModal();
-      refreshView();
-      showToast(`Categoria "${nome}" salva com ${ids.length} produto(s).`);
-    }
-
-    function ptGroupDeleteConfirm(id) {
-      const g = ptGroups().find(x => x.id === id);
-      if (!g || !isManager()) return;
-      openModal(`
-        <h3>Excluir categoria</h3>
-        <p style="font-size:14px;line-height:1.6">Excluir a categoria <b>${escapeHtml(g.nome)}</b>? Os produtos e seus preços não são alterados, só o agrupamento é removido.</p>
-        <div style="display:flex;gap:10px;margin-top:18px">
-          <button onclick="ptGroupDelete('${g.id}')">${icon('trash')} Sim, excluir categoria</button>
+          ${changes.length ? `<button onclick="applySalePrices()">${icon('tag')} Aplicar novos preços</button>` : ''}
           <button class="secondary" onclick="closeModal()">Cancelar</button>
         </div>
       `);
     }
 
-    async function ptGroupDelete(id) {
-      const g = ptGroups().find(x => x.id === id);
-      if (!g || !isManager()) return;
-      database.grupos = ptGroups().filter(x => x.id !== id);
-      if (priceTool.cat === 'grp:' + id) priceTool.cat = '';
-      addAuditLog(`Categoria "${g.nome}" excluída`);
+    async function applySalePrices() {
+      if (!salePricePlan || !isManager()) return;
+      const plan = salePricePlan;
+      plan.changes.forEach(c => {
+        c.prod.preco = c.para;
+      });
+      addAuditLog(`Preço de venda atualizado pelas tabelas Cobre 5 / Telecom 5 / Alumínio 5 (${plan.fileName}): ${plan.changes.length} produtos`);
+      salePricePlan = null;
       await saveData();
       closeModal();
       refreshView();
-      showToast('Categoria excluída.');
+      showToast(`Preço de venda atualizado em ${plan.changes.length} produto(s).`);
     }
 
     function parseNumberPtBr(val) {
@@ -4574,8 +4312,8 @@
               ${isManager() ? `
                 <button onclick="triggerExcelUpload()">${icon('download')} Importar Planilha (.xlsx / .csv)</button>
                 <button onclick="triggerOrderCostUpload()" title="Lê a planilha de cotação/pedido e passa o valor unitário dos cabos pedidos a ser o novo custo">${icon('sheet')} Custo pelo Último Pedido</button>
-                <button onclick="triggerCostUpload()" title="Lê a aba MARKETUP e altera somente o preço de custo dos produtos já cadastrados">${icon('dollar')} Atualizar Custo (aba MARKETUP)</button>
-                <button class="secondary" onclick="navigateTo('precos')">${icon('dollar')} Preços por Categoria</button>
+                <button onclick="triggerCostUpload()" title="Lê a aba MARKETUP e altera somente o preço de custo dos produtos já cadastrados">${icon('dollar')} Atualizar Custo</button>
+                <button onclick="triggerPriceUpload()" title="Lê as tabelas Cobre 5, Telecom 5 e Alumínio 5 (ligadas à aba MARKETUP) e atualiza só o preço de venda">${icon('tag')} Atualizar Preço de Venda</button>
                 ${hasInactiveInDb ? `<button class="danger-outline" onclick="confirmRemoveInactiveProducts()">${icon('ban')} Excluir Inativos (${database.prod.filter(p => !isProductActive(p)).length})</button>` : ''}
                 ${database.prod.length > 0 ? `<button class="danger-outline" onclick="confirmClearAllProducts()" title="Excluir todos os produtos do catálogo">${icon('trash')} Excluir Todos os Produtos</button>` : ''}
               ` : ''}
@@ -4610,14 +4348,6 @@
               ];
             })
           );
-      },
-
-      precos() {
-        if (!isManager()) {
-          return renderHeader('CATÁLOGO', 'PREÇOS POR CATEGORIA', '') +
-            `<div class="card"><p class="mut" style="margin:0">Somente administradores podem alterar preços em lote.</p></div>`;
-        }
-        return renderHeader('CATÁLOGO', 'PREÇOS POR CATEGORIA', '') + `<div id="pt_root">${ptRoot()}</div>`;
       },
 
       orc() {
@@ -7005,8 +6735,6 @@
           cfg: { liberaApos: 1, maxDesc: 10 }
         };
       }
-
-      if (!Array.isArray(database.grupos)) database.grupos = [];
 
       if (Array.isArray(database.prod)) {
         const beforeLen = database.prod.length;
