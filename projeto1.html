@@ -1937,6 +1937,43 @@
     @media print {
       #print-overlay, .print-sheet { animation: none !important; }
     }
+
+    td input.price-inline {
+      width: 118px;
+      padding: 6px 8px;
+      font-family: var(--font-serif);
+      font-size: 15px;
+      font-weight: 700;
+    }
+    td input.price-inline:not(:focus):not(:hover) {
+      background: transparent;
+      border-color: transparent;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .pay-line {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--bd-strong);
+    }
+    .pay-total-box {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .pay-total-box .big {
+      font-family: var(--font-serif);
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body>
@@ -2580,6 +2617,34 @@
     const nextSeqNumber = key => String(++database.seq[key]).padStart(4, '0');
     const addAuditLog = action => database.audit.unshift({ t: Date.now(), u: currentUser ? currentUser.nome : 'Sistema', a: action });
 
+    const SESSION_KEY = 'marketlandia_session';
+    const saveSession = () => {
+      try {
+        if (!currentUser) return;
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          uid: currentUser.id,
+          page: activePage === 'pagar' ? 'receber' : activePage
+        }));
+      } catch (e) {}
+    };
+    const clearSession = () => {
+      try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+    };
+    const restoreSession = () => {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        const user = saved && database.users.find(u => u.id === saved.uid && u.ativo);
+        if (!user) {
+          if (database.users.length) clearSession();
+          return;
+        }
+        currentUser = user;
+        if (saved.page && saved.page !== 'pagar' && PAGES[saved.page]) activePage = saved.page;
+      } catch (e) {}
+    };
+
     const isAdmin = () => currentUser?.role === 'admin';
     const isManager = () => currentUser?.role !== 'vendedor';
     const filterByOwnership = list => isManager() ? list : list.filter(item => item.vend === currentUser.id);
@@ -2883,7 +2948,7 @@
       ['home', 'Início', icon('home'), false],
       ['prod', 'Catálogo', icon('box'), false],
       ['orc', 'Orçamentos', icon('tag'), false],
-      ['ped', 'Vendas / Pedidos', icon('cart'), false],
+      ['ped', 'Vendas / Pedidos', icon('cart'), true],
       ['cli', 'Clientes', icon('users'), false],
       ['fat', 'Notas / Faturas', icon('file'), false],
       ['vendas', 'Relatório de Vendas', icon('chart'), false],
@@ -2920,6 +2985,7 @@
 
       currentUser = user;
       activePage = 'prod';
+      saveSession();
       addAuditLog(`Login realizado (${user.role.toUpperCase()}: ${user.nome})`);
       await saveData();
       renderApp();
@@ -2928,6 +2994,8 @@
     async function logout() {
       addAuditLog('Logout realizado');
       await saveData();
+      clearSession();
+      paymentDraft = null;
       currentUser = null;
       renderApp();
     }
@@ -3013,6 +3081,7 @@
 
     function navigateTo(pageKey) {
       activePage = pageKey;
+      if (pageKey !== 'pagar') paymentDraft = null;
       searchQuery = '';
       cliStatusFilter = 'ALL';
       cliLimit = CLI_PAGE;
@@ -3020,6 +3089,7 @@
       if (currentUser && getEl('main-content')) {
         const navItem = APP_NAVIGATION.find(item => item[0] === activePage);
         if (!PAGES[activePage] || (navItem?.[3] && !isAdmin())) activePage = 'home';
+        saveSession();
         const topSearch = document.querySelector('.top-search input');
         if (topSearch) topSearch.value = '';
         refreshView();
@@ -3069,7 +3139,7 @@
       }
 
       const activeNavItem = APP_NAVIGATION.find(item => item[0] === activePage);
-      if (!PAGES[activePage] || (activeNavItem?.[3] && !isAdmin())) {
+      if (!PAGES[activePage] || (activeNavItem?.[3] && !isAdmin()) || (activePage === 'pagar' && !paymentDraft)) {
         activePage = 'home';
       }
 
@@ -3091,7 +3161,7 @@
               <div class="top-pills">
                 <span class="pill-active">${icon('bolt')} ERP</span>
                 <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('receber')">${icon('dollar')} Contas a Receber</span>
-                <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('ped')">${icon('monitor')} PDV / Vendas</span>
+                ${isAdmin() ? `<span class="pill-item" role="link" tabindex="0" onclick="navigateTo('ped')">${icon('monitor')} PDV / Vendas</span>` : ''}
                 <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('prod')">${icon('box')} Catálogo (${database.prod.length})</span>
               </div>
             </div>
@@ -3202,8 +3272,9 @@
     }
 
     function refreshView() {
+      const navKey = activePage === 'pagar' ? (paymentDraft?.returnPage || 'receber') : activePage;
       document.querySelectorAll('nav a').forEach(a => {
-        a.classList.toggle('on', a.id === `nav_${activePage}`);
+        a.classList.toggle('on', a.id === `nav_${navKey}`);
       });
       const topCatalogPill = document.querySelector('.top-pills .pill-item:last-child');
       if (topCatalogPill) {
@@ -4336,7 +4407,9 @@
                 escapeHtml(p.un),
                 isManager() ? formatCurrency(p.custo) : '—',
                 isManager() ? costAverageCell(p) : '—',
-                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
+                isManager()
+                  ? `<input type="number" class="price-inline" step="any" min="0.01" value="${Math.round((Number(p.preco) || 0) * 10000) / 10000}" title="Digite o novo preço e pressione Enter (ou saia do campo) para salvar" aria-label="Preço de venda de ${escapeHtml(p.sku)}" onchange="updateProductPriceInline('${p.id}', this.value)" onkeydown="if(event.key==='Enter')this.blur()">`
+                  : `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(p.preco)}</b>`,
                 isManager() ? `${margin}%` : '—',
                 p.est == null ? '<span class="mut">SERVIÇO</span>' : p.est > 0 ? `<span class="dot-ok">${p.est} ${escapeHtml(p.un)}</span>` : `<span class="dot-bad">${p.est} ${escapeHtml(p.un)}</span>`,
                 isManager()
@@ -4712,6 +4785,109 @@
             ]));
       },
 
+      pagar() {
+        const head = `
+          <div class="page-head">
+            <div>
+              <small>FINANCEIRO</small>
+              <h2>CONFIRMAR PAGAMENTO</h2>
+            </div>
+            <span class="help-circle" title="Divida o valor entre várias formas de pagamento">?</span>
+          </div>`;
+        const inv = paymentDraft ? database.fat.find(f => f.id === paymentDraft.invoiceId) : null;
+        if (!inv || !isManager()) {
+          return head + `
+            <div class="card form-layout">
+              <p>Nenhuma fatura selecionada para pagamento.</p>
+              <button onclick="navigateTo('receber')">${icon('dollar')} Ir para Contas a Receber</button>
+            </div>`;
+        }
+
+        const m = paymentSummaryModel();
+        const fin = m.fin;
+        const ped = database.ped.find(p => p.id === inv.ped);
+        const history = Array.isArray(inv.pagtos) ? inv.pagtos : [];
+        const now = Date.now();
+
+        return head + `
+          <div class="cards">
+            ${renderCard('Total da fatura', formatCurrency(fin.valor))}
+            ${renderCard('Já recebido', formatCurrency(fin.pago), 'ok')}
+            ${renderCard('Saldo a receber', formatCurrency(fin.saldo), 'bad')}
+          </div>
+
+          <div class="card form-layout" style="margin-bottom:18px">
+            <h3 class="panel-title">Fatura ${escapeHtml(inv.n)}</h3>
+            <p style="margin:0 0 12px">
+              Pedido <b>#${escapeHtml(ped ? ped.n : '—')}</b> · Cliente <b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br>
+              <small class="mut">Vendedor: <b>${escapeHtml(String(ped ? getSellerDisplayName(ped) : getEntityName('users', inv.vend)))}</b>${ped ? ` · Combinado no pedido: <b>${escapeHtml(ped.formaPag || '—')} (${ped.parc || 1}x)</b>` : ''}</small>
+            </p>
+            ${renderTable(['PARCELA', 'VENCIMENTO', 'VALOR', 'RECEBIDO', 'SALDO'], fin.parcelas.map(r => {
+              const open = roundMoney(r.valor - r.pago);
+              return [
+                escapeHtml(r.parc),
+                formatDate(r.venc) + (open > 0.004 && r.venc < now ? ' <span class="dot-bad">ATRASADO</span>' : ''),
+                formatCurrency(r.valor),
+                formatCurrency(r.pago),
+                open > 0.004 ? `<b>${formatCurrency(open)}</b>` : '<span class="dot-ok">PAGA</span>'
+              ];
+            }), true)}
+          </div>
+
+          <div class="card form-layout" style="margin-bottom:18px">
+            <h3 class="panel-title">Formas de pagamento</h3>
+            <p class="mut" style="font-size:12px;margin:0 0 12px">Divida o valor em quantas formas precisar. Exemplo: R$ 15.000,00 = R$ 5.000,00 em boleto + R$ 4.000,00 em PIX + R$ 6.000,00 em dinheiro.</p>
+            ${paymentDraft.lines.map((l, idx) => `
+              <div class="pay-line">
+                <div>
+                  <label>Forma ${idx + 1}</label>
+                  <select onchange="payLineSet('${l.id}', 'forma', this.value)">
+                    ${PAYMENT_METHODS.map(x => `<option value="${x}" ${x === l.forma ? 'selected' : ''}>${x}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label>Valor (R$)</label>
+                  <input type="number" step="0.01" min="0" placeholder="0,00" value="${l.valor ? roundMoney(l.valor).toFixed(2) : ''}" oninput="payLineSet('${l.id}', 'valor', this.value)">
+                </div>
+                <div>
+                  <label>Observação / Nº do documento</label>
+                  <input placeholder="Ex.: nº do boleto, comprovante PIX, recibo" value="${escapeHtml(l.obs || '')}" oninput="payLineSet('${l.id}', 'obs', this.value)">
+                </div>
+                <div style="display:flex;gap:6px">
+                  <button type="button" class="secondary" onclick="payLineFill('${l.id}')" title="Preenche com o valor que ainda falta">Restante</button>
+                  ${paymentDraft.lines.length > 1 ? `<button type="button" class="danger-outline" onclick="payLineRemove('${l.id}')" title="Remover esta forma" aria-label="Remover esta forma">${icon('trash')}</button>` : ''}
+                </div>
+              </div>`).join('')}
+            <button type="button" class="secondary" onclick="payLineAdd()">+ Adicionar forma de pagamento</button>
+          </div>
+
+          <div class="card form-layout" style="margin-bottom:18px">
+            <h3 class="panel-title">Resumo</h3>
+            <div class="pay-total-box">
+              <div>
+                <small class="mut">INFORMADO</small>
+                <div class="big" id="pay_informed">${formatCurrency(m.informed)}</div>
+              </div>
+              <div>
+                <small class="mut" id="pay_rest_label">${m.rest < -0.005 ? 'EXCEDENTE' : 'FALTA'}</small>
+                <div class="big" id="pay_rest" style="color:${m.rest < -0.005 ? 'var(--bad)' : (m.rest < 0.005 ? 'var(--ok)' : 'var(--fg)')}">${formatCurrency(Math.abs(m.rest))}</div>
+              </div>
+            </div>
+            <p class="mut" id="pay_breakdown" style="font-size:12px;margin:10px 0 0">${escapeHtml(m.breakdown) || '—'}</p>
+            <p id="pay_status" style="font-size:13px;font-weight:700;margin:8px 0 0;color:var(--${m.tone})">${escapeHtml(m.status)}</p>
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+              <button id="pay_confirm_btn" class="dark-btn" onclick="applyInvoicePayment()" ${m.canConfirm ? '' : 'disabled'}>${icon('dollar')} Confirmar pagamento</button>
+              <button class="secondary" onclick="closePaymentPage()">Voltar</button>
+            </div>
+          </div>` + (history.length ? `
+          <h3 class="panel-title" style="margin:6px 0 8px">Pagamentos já lançados nesta fatura</h3>` + renderTable(['DATA', 'REGISTRADO POR', 'FORMAS', 'TOTAL'], history.slice().reverse().map(p => [
+            formatDateTime(p.t),
+            escapeHtml(p.por),
+            (p.linhas || []).map(l => `${escapeHtml(l.forma)} ${formatCurrency(l.valor)}${l.obs ? ` <small class="mut">(${escapeHtml(l.obs)})</small>` : ''}`).join('<br>'),
+            `<b>${formatCurrency(p.total)}</b>`
+          ]), true) : '');
+      },
+
       cfg() {
         const emp = getCompanyInfo();
         return renderHeader('SISTEMA', 'AJUSTES E AUDITORIA', '') + `
@@ -4724,6 +4900,9 @@
               </label>
               <label style="margin-top:14px">Desconto máximo permitido ao vendedor (%)</label>
               <input type="number" value="${database.cfg.maxDesc}" onchange="database.cfg.maxDesc=Number(this.value);saveData()" style="max-width:140px">
+              <label style="margin-top:14px">Variação máxima do preço no orçamento/pedido (± % sobre o preço do catálogo)</label>
+              <input type="number" min="0" step="0.1" value="${priceLockPct()}" onchange="setPriceLock(this.value)" style="max-width:140px">
+              <p class="mut" style="margin:8px 0 0;font-size:12px">O vendedor só consegue alterar o preço unitário dentro desse limite. Administradores não têm limite.</p>
               <p class="mut" style="margin-bottom:0;font-size:12px;margin-top:12px">
                 Base da comissão: valor líquido dos itens faturados, sem frete.
               </p>
@@ -5031,6 +5210,25 @@
       closeModal();
       refreshView();
       showToast(`Produto ${sku} salvo com sucesso!`);
+    }
+
+    function updateProductPriceInline(prodId, raw) {
+      if (!isManager()) return;
+      const prod = database.prod.find(p => p.id === prodId);
+      if (!prod) return;
+      const value = Number(String(raw).trim().replace(',', '.'));
+      if (!isFinite(value) || value <= 0) {
+        showToast('Informe um preço de venda maior que zero.');
+        return refreshView();
+      }
+      const novo = Math.round(value * 10000) / 10000;
+      const antigo = Number(prod.preco) || 0;
+      if (Math.abs(novo - antigo) < 0.00005) return refreshView();
+      prod.preco = novo;
+      addAuditLog(`Preço de venda de ${prod.sku} alterado manualmente: ${formatCurrency(antigo)} → ${formatCurrency(novo)}`);
+      saveData();
+      refreshView();
+      showToast(`Preço de ${prod.sku} atualizado para ${formatCurrency(novo)}.`);
     }
 
     function confirmDeleteProduct(prodId) {
@@ -5445,6 +5643,11 @@
       const pct = Number(String(getVal('quote_markup')).trim().replace(',', '.'));
       if (!isFinite(pct) || pct === 0 || pct <= -100) return showToast('Informe uma porcentagem válida (ex: 8).');
       if (pct < 0 && currentUser.role === 'vendedor') return showToast('Vendedor só pode aplicar acréscimo.');
+      const markedPrice = item => Math.round(item.pu * (1 + pct / 100) * 10000) / 10000;
+      if (!isAdmin()) {
+        const blocked = draftOrder.itens.find(i => !checkPriceLock(i.p, markedPrice(i)).ok);
+        if (blocked) return showToast(checkPriceLock(blocked.p, markedPrice(blocked)).msg);
+      }
 
       draftOrder.markupBackup = { pct, list: draftOrder.itens.map(i => ({ i, pu: i.pu })) };
       draftOrder.itens.forEach(i => {
@@ -5538,7 +5741,12 @@
               `<b>${escapeHtml(pr?.nome || '—')}</b>`,
               escapeHtml(pr?.un || 'UN'),
               `<b>${formatNumber(i.q, 3)}</b>`,
-              formatCurrency(i.pu),
+              (() => {
+                const base = Number(pr?.preco) || 0;
+                const changed = base > 0 && Math.abs(i.pu - base) > 0.00005;
+                const diff = base > 0 ? (i.pu / base - 1) * 100 : 0;
+                return `<input type="number" step="any" min="0.01" style="width:112px" value="${Math.round(i.pu * 10000) / 10000}" title="Altere o preço unitário deste item${isAdmin() ? '' : ` (limite de ±${formatNumber(priceLockPct(), 1)}% sobre o catálogo)`}" onchange="setQuoteItemPrice(${idx}, this.value)">${changed ? `<br><small class="mut">Catálogo ${formatCurrency(base)} (${diff > 0 ? '+' : ''}${formatNumber(diff, 2)}%)</small>` : ''}`;
+              })(),
               formatCurrency(discVal),
               `<b>${formatCurrency(i.q * i.pu * (1 - i.d / 100))}</b>`,
               `<button class="secondary" style="padding:4px 8px;font-size:11px" onclick="draftOrder.itens.splice(${idx},1);renderQuoteModal()">${icon('x')}</button>`
@@ -5623,10 +5831,65 @@
       renderQuoteModal();
     }
 
+    const priceLockPct = () => {
+      const v = Number(database.cfg?.maxPreco);
+      return Number.isFinite(v) && v >= 0 ? v : 10;
+    };
+
+    function checkPriceLock(prodId, value) {
+      if (isAdmin()) return { ok: true };
+      const prod = database.prod.find(p => p.id === prodId);
+      const base = Number(prod?.preco) || 0;
+      if (!(base > 0)) return { ok: true };
+      const limit = priceLockPct();
+      const min = Math.round(base * (1 - limit / 100) * 10000) / 10000;
+      const max = Math.round(base * (1 + limit / 100) * 10000) / 10000;
+      if (value < min - 0.00005 || value > max + 0.00005) {
+        return {
+          ok: false,
+          msg: `${prod.sku}: o preço deve ficar entre ${formatCurrency(min)} e ${formatCurrency(max)} (±${formatNumber(limit, 1)}% do catálogo). Acima disso só o administrador altera.`
+        };
+      }
+      return { ok: true };
+    }
+
+    function setQuoteItemPrice(idx, raw) {
+      syncDraftValues();
+      const item = draftOrder.itens[idx];
+      if (!item) return;
+      const value = Math.round(Number(String(raw).trim().replace(',', '.')) * 10000) / 10000;
+      if (!isFinite(value) || value <= 0) {
+        showToast('Informe um preço unitário maior que zero.');
+        return renderQuoteModal();
+      }
+      const check = checkPriceLock(item.p, value);
+      if (!check.ok) {
+        showToast(check.msg);
+        return renderQuoteModal();
+      }
+      item.pu = value;
+      draftOrder.markupBackup = null;
+      renderQuoteModal();
+    }
+
+    function setPriceLock(raw) {
+      if (!isAdmin()) return;
+      const value = Math.max(0, Number(String(raw).trim().replace(',', '.')) || 0);
+      database.cfg.maxPreco = value;
+      addAuditLog(`Variação máxima de preço no orçamento/pedido alterada para ±${formatNumber(value, 1)}%`);
+      saveData();
+      refreshView();
+      showToast(`Limite de variação de preço: ±${formatNumber(value, 1)}%.`);
+    }
+
     function saveQuote(directOrder = false, openPrintAfter = false) {
       syncDraftValues();
       const client = database.cli.find(x => x.id === draftOrder.cli);
       if (!client || !draftOrder.itens.length) return showToast('Escolha o cliente e adicione ao menos um cabo/produto.');
+      if (!isAdmin()) {
+        const blocked = draftOrder.itens.find(i => !checkPriceLock(i.p, i.pu).ok);
+        if (blocked) return showToast(checkPriceLock(blocked.p, blocked.pu).msg);
+      }
 
       const sellerName = (draftOrder.vendNome || '').trim() || currentUser.nome;
 
@@ -5821,14 +6084,22 @@
         : '<span class="dot-warn">A ENTREGAR</span>';
     }
 
+    function paidMethodsLabel(inv) {
+      const methods = [];
+      (Array.isArray(inv.pagtos) ? inv.pagtos : []).forEach(p => (p.linhas || []).forEach(l => {
+        if (!methods.includes(l.forma)) methods.push(l.forma);
+      }));
+      return methods.length ? `<br><small class="mut">${escapeHtml(methods.join(' + '))}</small>` : '';
+    }
+
     function paymentBadge(inv) {
       const fin = invoiceFinance(inv);
       if (!fin.parcelas.length) return '<span class="mut">—</span>';
       if (fin.paga) {
-        return `<span class="dot-ok">PAGO</span>${inv.pagoEm ? `<br><small class="mut">${formatDate(inv.pagoEm)}</small>` : ''}`;
+        return `<span class="dot-ok">PAGO</span>${inv.pagoEm ? `<br><small class="mut">${formatDate(inv.pagoEm)}</small>` : ''}${paidMethodsLabel(inv)}`;
       }
       if (fin.pago > 0.004) {
-        return `<span class="dot-warn">PARCIAL</span><br><small class="mut">saldo ${formatCurrency(fin.saldo)}</small>`;
+        return `<span class="dot-warn">PARCIAL</span><br><small class="mut">saldo ${formatCurrency(fin.saldo)}</small>${paidMethodsLabel(inv)}`;
       }
       return '<span class="dot-bad">NÃO PAGO</span>';
     }
@@ -5842,9 +6113,13 @@
         : `<button style="${small}" onclick="confirmInvoiceDelivery('${inv.id}', ${ro})">${icon('save')} Confirmar entrega</button>`;
       let payment = '';
       if (isManager() && fin.parcelas.length) {
-        payment = fin.paga
-          ? (inv.pagoSnap ? `<button class="secondary" style="${small}" onclick="undoInvoicePayment('${inv.id}', ${ro})">Desfazer pagamento</button>` : '')
-          : `<button class="dark-btn" style="${small}" onclick="openInvoicePaymentConfirm('${inv.id}', ${ro})">${icon('dollar')} Confirmar pagamento</button>`;
+        const lancamentos = Array.isArray(inv.pagtos) ? inv.pagtos.length : 0;
+        if (!fin.paga) {
+          payment += `<button class="dark-btn" style="${small}" onclick="openInvoicePaymentConfirm('${inv.id}', ${ro})">${icon('dollar')} ${fin.pago > 0.004 ? 'Lançar pagamento' : 'Confirmar pagamento'}</button>`;
+        }
+        if (lancamentos || inv.pagoSnap) {
+          payment += `<button class="secondary" style="${small}" onclick="undoInvoicePayment('${inv.id}', ${ro})">${lancamentos > 1 ? 'Desfazer último pagamento' : 'Desfazer pagamento'}</button>`;
+        }
       }
       return `<div style="display:flex;gap:6px;flex-wrap:wrap">${delivery}${payment}</div>`;
     }
@@ -5899,61 +6174,210 @@
       finishInvoiceAction(reopenOrderId, `Entrega da fatura ${inv.n} desfeita.`);
     }
 
+    const PAYMENT_METHODS = ['BOLETO', 'PIX', 'DINHEIRO', 'CHEQUE', 'CARTÃO DE CRÉDITO', 'CARTÃO DE DÉBITO', 'TRANSFERÊNCIA'];
+    const roundMoney = v => Math.round((Number(v) || 0) * 100) / 100;
+    let paymentDraft = null;
+
     function openInvoicePaymentConfirm(invoiceId, reopenOrderId = '') {
       const inv = database.fat.find(f => f.id === invoiceId);
       if (!inv || !isManager()) return;
       const fin = invoiceFinance(inv);
       if (fin.saldo < 0.005) return showToast('Esta fatura já está paga.');
       const ped = database.ped.find(p => p.id === inv.ped);
-      const abertas = fin.parcelas.filter(r => r.valor - r.pago > 0.004).length;
-      openModal(`
-        <h3>Confirmar pagamento</h3>
-        <p>Fatura <b>${escapeHtml(inv.n)}</b> · Pedido <b>#${escapeHtml(ped ? ped.n : '—')}</b><br>
-        <b>${getEntityName('cli', inv.cli).toUpperCase()}</b></p>
-        <p>Será registrado o recebimento do saldo de
-          <b style="font-family:var(--font-serif);font-size:20px;color:var(--ok)">${formatCurrency(fin.saldo)}</b>
-          (${abertas} parcela${abertas > 1 ? 's' : ''} em aberto), com a data de hoje.</p>
-        <div style="display:flex;gap:10px;margin-top:18px">
-          <button class="dark-btn" onclick="applyInvoicePayment('${inv.id}', '${reopenOrderId}')">${icon('dollar')} Sim, pagamento recebido</button>
-          <button class="secondary" onclick="${reopenOrderId ? `openOrderDetails('${reopenOrderId}')` : 'closeModal()'}">Cancelar</button>
-        </div>`);
+      const combined = String(ped?.formaPag || '').toUpperCase();
+      paymentDraft = {
+        invoiceId,
+        reopenOrderId,
+        returnPage: activePage === 'pagar' ? (paymentDraft?.returnPage || 'receber') : activePage,
+        lines: [{ id: nextId(), forma: PAYMENT_METHODS.includes(combined) ? combined : 'PIX', valor: fin.saldo, obs: '' }]
+      };
+      closeModal();
+      activePage = 'pagar';
+      refreshView();
+      window.scrollTo({ top: 0 });
     }
 
-    function applyInvoicePayment(invoiceId, reopenOrderId = '') {
-      const inv = database.fat.find(f => f.id === invoiceId);
-      if (!inv || !isManager()) return;
+    function paymentSummaryModel() {
+      const inv = database.fat.find(f => f.id === paymentDraft.invoiceId);
       const fin = invoiceFinance(inv);
-      if (fin.saldo < 0.005) return;
-      const snapshot = {};
-      fin.parcelas.forEach(r => {
-        if (r.valor - r.pago > 0.004) {
-          snapshot[r.id] = r.pago;
-          r.pago = r.valor;
-        }
+      const lines = paymentDraft.lines;
+      const informed = roundMoney(sumCollection(lines, l => Number(l.valor) || 0));
+      const rest = roundMoney(fin.saldo - informed);
+      const byMethod = {};
+      lines.forEach(l => {
+        const v = Number(l.valor) || 0;
+        if (v > 0) byMethod[l.forma] = roundMoney((byMethod[l.forma] || 0) + v);
       });
-      inv.pagoSnap = snapshot;
-      inv.pagoEm = Date.now();
-      inv.pagoPor = currentUser.nome;
+      const breakdown = Object.entries(byMethod).map(([m, v]) => `${m}: ${formatCurrency(v)}`).join(' · ');
+      let status, tone, canConfirm;
+      if (informed <= 0) {
+        status = 'Informe o valor recebido em ao menos uma forma de pagamento.';
+        tone = 'warn';
+        canConfirm = false;
+      } else if (rest < -0.005) {
+        status = `O total informado passa do saldo em ${formatCurrency(-rest)}.`;
+        tone = 'bad';
+        canConfirm = false;
+      } else if (rest < 0.005) {
+        status = 'Pagamento total: a fatura será quitada.';
+        tone = 'ok';
+        canConfirm = true;
+      } else {
+        status = `Pagamento parcial: ficará um saldo de ${formatCurrency(rest)} em aberto.`;
+        tone = 'warn';
+        canConfirm = true;
+      }
+      return { fin, informed, rest, breakdown, status, tone, canConfirm };
+    }
+
+    function updatePaymentSummary() {
+      if (!paymentDraft) return;
+      const m = paymentSummaryModel();
+      const setText = (id, text) => { const el = getEl(id); if (el) el.textContent = text; };
+      setText('pay_informed', formatCurrency(m.informed));
+      setText('pay_rest', formatCurrency(Math.abs(m.rest)));
+      setText('pay_rest_label', m.rest < -0.005 ? 'EXCEDENTE' : 'FALTA');
+      setText('pay_breakdown', m.breakdown || '—');
+      const restEl = getEl('pay_rest');
+      if (restEl) restEl.style.color = m.rest < -0.005 ? 'var(--bad)' : (m.rest < 0.005 ? 'var(--ok)' : 'var(--fg)');
+      const statusEl = getEl('pay_status');
+      if (statusEl) {
+        statusEl.textContent = m.status;
+        statusEl.style.color = `var(--${m.tone})`;
+      }
+      const btn = getEl('pay_confirm_btn');
+      if (btn) btn.disabled = !m.canConfirm;
+    }
+
+    function payLineSet(lineId, field, value) {
+      const line = paymentDraft?.lines.find(l => l.id === lineId);
+      if (!line) return;
+      line[field] = field === 'valor' ? (Number(String(value).replace(',', '.')) || 0) : value;
+      updatePaymentSummary();
+    }
+
+    function payLineFill(lineId) {
+      if (!paymentDraft) return;
+      const line = paymentDraft.lines.find(l => l.id === lineId);
+      if (!line) return;
+      const m = paymentSummaryModel();
+      const others = roundMoney(m.informed - (Number(line.valor) || 0));
+      line.valor = Math.max(0, roundMoney(m.fin.saldo - others));
+      refreshView();
+    }
+
+    function payLineAdd() {
+      if (!paymentDraft) return;
+      const m = paymentSummaryModel();
+      const used = paymentDraft.lines.map(l => l.forma);
+      paymentDraft.lines.push({
+        id: nextId(),
+        forma: PAYMENT_METHODS.find(x => !used.includes(x)) || 'PIX',
+        valor: Math.max(0, m.rest),
+        obs: ''
+      });
+      refreshView();
+    }
+
+    function payLineRemove(lineId) {
+      if (!paymentDraft) return;
+      if (paymentDraft.lines.length <= 1) return showToast('Mantenha ao menos uma forma de pagamento.');
+      paymentDraft.lines = paymentDraft.lines.filter(l => l.id !== lineId);
+      refreshView();
+    }
+
+    function leavePaymentPage() {
+      const back = paymentDraft?.returnPage || 'receber';
+      const reopen = paymentDraft?.reopenOrderId || '';
+      paymentDraft = null;
+      activePage = PAGES[back] ? back : 'receber';
+      refreshView();
+      window.scrollTo({ top: 0 });
+      return reopen;
+    }
+
+    function closePaymentPage() {
+      const reopen = leavePaymentPage();
+      if (reopen) openOrderDetails(reopen);
+    }
+
+    function applyInvoicePayment() {
+      if (!paymentDraft || !isManager()) return;
+      const inv = database.fat.find(f => f.id === paymentDraft.invoiceId);
+      if (!inv) return;
+      const fin = invoiceFinance(inv);
+      const lines = paymentDraft.lines
+        .map(l => ({ forma: l.forma, valor: roundMoney(l.valor), obs: String(l.obs || '').trim() }))
+        .filter(l => l.valor > 0);
+      if (!lines.length) return showToast('Informe o valor recebido em ao menos uma forma de pagamento.');
+
+      const total = roundMoney(sumCollection(lines, l => l.valor));
+      if (total > fin.saldo + 0.005) {
+        return showToast(`O total informado (${formatCurrency(total)}) é maior que o saldo da fatura (${formatCurrency(fin.saldo)}).`);
+      }
+
+      let remaining = total;
+      const aplic = {};
+      fin.parcelas
+        .filter(r => r.valor - r.pago > 0.004)
+        .sort((a, b) => a.venc - b.venc)
+        .forEach(r => {
+          if (remaining < 0.005) return;
+          const take = Math.min(roundMoney(r.valor - r.pago), remaining);
+          r.pago = roundMoney(r.pago + take);
+          aplic[r.id] = take;
+          remaining = roundMoney(remaining - take);
+        });
+
+      if (invoiceFinance(inv).saldo < 0.005) {
+        fin.parcelas.forEach(r => { r.pago = r.valor; });
+      }
+
+      if (!Array.isArray(inv.pagtos)) inv.pagtos = [];
+      inv.pagtos.push({ id: nextId(), t: Date.now(), por: currentUser.nome, total, linhas: lines, aplic });
+
+      const after = invoiceFinance(inv);
+      if (after.paga) {
+        inv.pagoEm = Date.now();
+        inv.pagoPor = currentUser.nome;
+      }
+
       evaluateCommissions();
-      addAuditLog(`Pagamento confirmado da fatura ${inv.n}: ${formatCurrency(fin.saldo)}`);
+      const resumo = lines.map(l => `${l.forma} ${formatCurrency(l.valor)}`).join(' + ');
+      addAuditLog(`Pagamento da fatura ${inv.n}: ${resumo} (total ${formatCurrency(total)}) — ${after.paga ? 'fatura quitada' : 'pagamento parcial'}`);
       saveData();
-      finishInvoiceAction(reopenOrderId, `Pagamento da fatura ${inv.n} confirmado!`);
+
+      const reopen = leavePaymentPage();
+      if (reopen) openOrderDetails(reopen);
+      showToast(after.paga ? `Pagamento da fatura ${inv.n} confirmado!` : `Pagamento parcial de ${formatCurrency(total)} registrado na fatura ${inv.n}.`);
     }
 
     function undoInvoicePayment(invoiceId, reopenOrderId = '') {
       const inv = database.fat.find(f => f.id === invoiceId);
-      if (!inv || !isManager() || !inv.pagoSnap) return;
+      if (!inv || !isManager()) return;
+      const hasLog = Array.isArray(inv.pagtos) && inv.pagtos.length > 0;
+      if (!hasLog && !inv.pagoSnap) return;
       const commission = database.com.find(c => c.fat === inv.id);
       if (commission && commission.st === 'Paga') {
         return showToast('A comissão desta fatura já foi paga; não é possível desfazer o pagamento.');
       }
-      Object.entries(inv.pagoSnap).forEach(([receiptId, before]) => {
-        const receipt = database.rec.find(r => r.id === receiptId);
-        if (receipt) receipt.pago = before;
-      });
-      delete inv.pagoSnap;
+
+      if (hasLog) {
+        const last = inv.pagtos.pop();
+        Object.entries(last.aplic || {}).forEach(([receiptId, value]) => {
+          const receipt = database.rec.find(r => r.id === receiptId);
+          if (receipt) receipt.pago = Math.max(0, roundMoney(receipt.pago - value));
+        });
+      } else {
+        Object.entries(inv.pagoSnap).forEach(([receiptId, before]) => {
+          const receipt = database.rec.find(r => r.id === receiptId);
+          if (receipt) receipt.pago = before;
+        });
+        delete inv.pagoSnap;
+      }
       delete inv.pagoEm;
       delete inv.pagoPor;
+
       if (commission && commission.st === 'Liberada' && database.cfg.liberaApos) commission.st = 'Apurada';
       evaluateCommissions();
       addAuditLog(`Pagamento desfeito da fatura ${inv.n}`);
@@ -6002,6 +6426,7 @@
     }
 
     function openOrderDetails(orderId) {
+      if (!isAdmin()) return showToast('Apenas administradores têm acesso aos pedidos.');
       const order = database.ped.find(x => x.id === orderId);
       if (!order) return;
       const canInvoice = isManager() && order.st !== 'Faturado';
@@ -6732,7 +7157,7 @@
           com: [],
           rec: [],
           audit: [],
-          cfg: { liberaApos: 1, maxDesc: 10 }
+          cfg: { liberaApos: 1, maxDesc: 10, maxPreco: 10 }
         };
       }
 
@@ -6764,6 +7189,7 @@
         await saveData();
       }
 
+      restoreSession();
       renderApp();
     })();
   </script>
