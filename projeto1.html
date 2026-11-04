@@ -1974,7 +1974,83 @@
       font-weight: 700;
       line-height: 1.1;
     }
-  </style>
+
+    /* ---------- Organização do menu e do layout ---------- */
+    .nav-group {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: #6c7380;
+      padding: 18px 14px 6px;
+      user-select: none;
+    }
+
+    .page-head { align-items: center; }
+
+    .head-add {
+      padding: 10px 18px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .head-add .ico { width: 16px; height: 16px; }
+
+    .action-panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .filter-box {
+      flex: 1 1 360px;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      border: 0;
+      padding: 0;
+    }
+
+    .filter-input-wrap {
+      flex: 1 1 300px;
+      background: var(--card);
+      border: 1px solid var(--bd-strong);
+    }
+
+    .tool-grid {
+      display: flex;
+      gap: 6px;
+    }
+
+    .tool-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    .sheet-bar { padding: 12px 16px; margin-bottom: 16px; }
+    .sheet-bar-info strong { font-size: 15px; margin-bottom: 2px; }
+    .sheet-bar-info small { font-size: 12.5px; line-height: 1.45; }
+
+    @media (max-width: 860px) {
+      .nav-group {
+        width: 1px;
+        padding: 0;
+        margin: 8px 6px;
+        font-size: 0;
+        align-self: stretch;
+        background: rgba(255, 255, 255, 0.14);
+      }
+      .page-head { align-items: flex-start; }
+      .head-add { width: 100%; }
+      .action-panel { display: flex; }
+      .tool-grid { display: none; }
+    }
+    </style>
 </head>
 <body>
   <div id="app"></div>
@@ -1985,6 +2061,7 @@
   <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleExcelUpload(event)">
 
   <input type="file" id="client-excel-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleClientExcelUpload(event)">
+  <input type="file" id="receivable-file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleReceivableUpload(event)">
   <input type="file" id="cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleCostUpload(event)">
   <input type="file" id="order-cost-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleOrderCostUpload(event)">
   <input type="file" id="price-file-input" accept=".xlsx,.xls" style="display:none" onchange="handlePriceUpload(event)">
@@ -2036,6 +2113,7 @@
       x: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>',
       sheet: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/>',
       monitor: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>',
+      plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
       chevron: '<path d="m9 6 6 6-6 6"/>'
     };
     const icon = (name, cls = '') =>
@@ -2846,23 +2924,23 @@
       refreshView();
     }
 
+    const SEARCH_PAGES = ['prod', 'cli', 'orc', 'ped', 'fat', 'receber', 'rec', 'com', 'usr'];
+    const ADD_LABELS = { home: 'Novo orçamento', orc: 'Novo orçamento', ped: 'Novo pedido', cli: 'Novo cliente', prod: 'Novo produto', usr: 'Novo usuário' };
+
     const renderHeader = (category, title, addCallback) => `
       <div class="page-head">
         <div>
           <small>${category}</small>
           <h2>${title}</h2>
         </div>
-        <span class="help-circle" title="Módulo ${title}">?</span>
+        ${addCallback ? `<button class="head-add" onclick="${addCallback}">${icon('plus')} ${ADD_LABELS[activePage] || 'Novo'}</button>` : ''}
       </div>
-      <div class="action-panel">
+      ${SEARCH_PAGES.includes(activePage) ? `<div class="action-panel">
         <div class="filter-box">
-          <label>${activePage === 'cli' ? 'Localizar cliente por nome, fantasia, CNPJ/CPF, código, telefone, cidade ou vendedor' : 'Localizar por Código (ex: VM250100), Descrição, Cliente ou Status'}</label>
           <div class="filter-input-wrap">
-            <input placeholder="${activePage === 'cli' ? 'Ex.: joao silva · 12.345.678 · (35) 3555 · alfenas' : 'Digite o código (ex: VM250100) ou nome do cabo/cliente…'}" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()" onkeydown="if(event.key==='Escape'&&this.value){searchQuery='';refreshView()}" autocomplete="off" autocapitalize="off" spellcheck="false" ${activePage === 'cli' ? 'aria-label="Buscar cliente"' : ''}>
+            <input placeholder="${activePage === 'cli' ? 'Buscar cliente por nome, fantasia, CNPJ/CPF, código, telefone, cidade ou vendedor' : 'Buscar por código (ex: VM250100), descrição, cliente ou status'}" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()" onkeydown="if(event.key==='Escape'&&this.value){searchQuery='';refreshView()}" autocomplete="off" autocapitalize="off" spellcheck="false" ${activePage === 'cli' ? 'aria-label="Buscar cliente"' : ''}>
           </div>
           <div class="filter-tags">
-            <span class="tag-active">MÓDULO: ${title.toUpperCase()} ${icon('x', 'ico-sm')}</span>
-            <span class="tag-dashed">FILTRO ATIVO</span>
             ${activePage === 'prod' ? `
               <button class="tag-btn ${prodStatusFilter === 'ALL' ? 'on' : ''}" onclick="prodStatusFilter='ALL';refreshView()">Todos no Sistema (${database.prod.length})</button>
               <button class="tag-btn ${prodStatusFilter === 'SIM' ? 'on' : ''}" onclick="prodStatusFilter='SIM';refreshView()">Ativo: Sim (${database.prod.filter(isProductActive).length})</button>
@@ -2881,16 +2959,7 @@
           <button class="tool-btn" onclick="saveData();showToast('Sincronizado com o banco de dados')" title="Sincronizar" aria-label="Sincronizar">${icon('sync')}</button>
           <button class="tool-btn" onclick="searchQuery='';prodStatusFilter='ALL';cliStatusFilter='ALL';cliLimit=CLI_PAGE;refreshView()" title="Limpar busca" aria-label="Limpar busca">${icon('clear')}</button>
         </div>
-        ${addCallback ? `
-          <button class="add-big-btn" onclick="${addCallback}">
-            <small>ADICIONAR</small>
-            <b>NOVO</b>
-          </button>` : `
-          <button class="add-big-btn" onclick="navigateTo('orc')">
-            <small>ATALHO</small>
-            <b>ORÇAR</b>
-          </button>`}
-      </div>
+      </div>` : ''}
     `;
 
     const renderTable = (headers, rows, bypassFilter = false) => {
@@ -2947,19 +3016,19 @@
     const STATUS_LIST = ['Rascunho', 'Enviado', 'Em negociação', 'Aprovado pelo cliente', 'Recusado', 'Expirado'];
 
     const APP_NAVIGATION = [
-      ['home', 'Início', icon('home'), false],
-      ['prod', 'Catálogo', icon('box'), false],
-      ['orc', 'Orçamentos', icon('tag'), false],
-      ['ped', 'Vendas / Pedidos', icon('cart'), true],
-      ['cli', 'Clientes', icon('users'), false],
-      ['fat', 'Notas / Faturas', icon('file'), false],
-      ['vendas', 'Relatório de Vendas', icon('chart'), false],
-      ['ganhos', 'Ganhos no Mês', icon('chart'), false],
-      ['receber', 'Contas a Receber', icon('dollar'), false],
-      ['rec', 'Financeiro', icon('dollar'), false],
-      ['com', 'Comissões', icon('chart'), false],
-      ['usr', 'Usuários', icon('user'), true],
-      ['cfg', 'Ajustes', icon('sliders'), true]
+      ['home', 'Início', icon('home'), false, ''],
+      ['orc', 'Orçamentos', icon('tag'), false, 'Vendas'],
+      ['ped', 'Vendas / Pedidos', icon('cart'), true, 'Vendas'],
+      ['cli', 'Clientes', icon('users'), false, 'Vendas'],
+      ['prod', 'Catálogo', icon('box'), false, 'Vendas'],
+      ['receber', 'Contas a Receber', icon('dollar'), false, 'Financeiro'],
+      ['fat', 'Notas / Faturas', icon('file'), false, 'Financeiro'],
+      ['rec', 'Parcelas e Baixas', icon('sheet'), false, 'Financeiro'],
+      ['com', 'Comissões', icon('chart'), false, 'Financeiro'],
+      ['vendas', 'Relatório de Vendas', icon('chart'), false, 'Relatórios'],
+      ['ganhos', 'Ganhos no Mês', icon('chart'), false, 'Relatórios'],
+      ['usr', 'Usuários', icon('user'), true, 'Sistema'],
+      ['cfg', 'Ajustes', icon('sliders'), true, 'Sistema']
     ];
 
     function quickFillLogin(email, defaultPw, roleLabel) {
@@ -3160,15 +3229,6 @@
           <header class="topbar">
             <div class="brand-area">
               <a class="logo" role="link" tabindex="0" onclick="navigateTo('home')">Market<span>Landia</span></a>
-              <div class="top-pills">
-                <span class="pill-active">${icon('bolt')} ERP</span>
-                <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('receber')">${icon('dollar')} Contas a Receber</span>
-                ${isAdmin() ? `<span class="pill-item" role="link" tabindex="0" onclick="navigateTo('ped')">${icon('monitor')} PDV / Vendas</span>` : ''}
-                <span class="pill-item" role="link" tabindex="0" onclick="navigateTo('prod')">${icon('box')} Catálogo (${database.prod.length})</span>
-              </div>
-            </div>
-            <div class="top-search">
-              <input autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Procure por código (ex: VM250100), cabo, cliente ou pedido…" value="${escapeHtml(searchQuery)}" oninput="searchQuery=this.value.toLowerCase();refreshView()">
             </div>
             <div class="top-user">
               <div class="avatar" role="button" tabindex="0" title="Alterar foto de perfil" aria-label="Alterar foto de perfil" onclick="openPhotoModal()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openPhotoModal()}">${avatarInner(currentUser, initials)}</div>
@@ -3183,11 +3243,18 @@
             <nav>
               <div class="nav-list">
                 <span class="nav-indicator" aria-hidden="true"></span>
-                ${APP_NAVIGATION.filter(nav => !nav[3] || isAdmin()).map(nav => `
-                  <a id="nav_${nav[0]}" role="link" tabindex="0" onclick="navigateTo('${nav[0]}')">
+                ${(() => {
+                  let lastGroup = '';
+                  return APP_NAVIGATION.filter(nav => !nav[3] || isAdmin()).map((nav, i) => {
+                    const label = nav[4] && nav[4] !== lastGroup ? `<div class="nav-group">${nav[4]}</div>` : '';
+                    lastGroup = nav[4] || lastGroup;
+                    return `${label}
+                  <a id="nav_${nav[0]}" role="link" tabindex="0" style="--n:${i}" onclick="navigateTo('${nav[0]}')">
                     <span class="lbl"><span>${nav[2]}</span> ${nav[1]}</span>
                     <span class="arr">${icon('chevron')}</span>
-                  </a>`).join('')}
+                  </a>`;
+                  }).join('');
+                })()}
               </div>
               <div class="nav-footer">
                 <button class="logout-btn" onclick="logout()">${icon('logout')} Sair do Sistema</button>
@@ -4220,6 +4287,210 @@
       return { added, updated };
     }
 
+    let receivableImportPlan = null;
+
+    const normName = s => normText(s).replace(/\s+/g, ' ').trim();
+
+    function parseBrDate(v) {
+      if (v instanceof Date && !isNaN(v)) return new Date(v.getFullYear(), v.getMonth(), v.getDate(), 12).getTime();
+      if (typeof v === 'number' && v > 20000 && v < 80000) {
+        const d = XLSX.SSF.parse_date_code(v);
+        if (d) return new Date(d.y, d.m - 1, d.d, 12).getTime();
+      }
+      const s = String(v ?? '').trim();
+      let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      if (m) {
+        let y = +m[3];
+        if (y < 100) y += 2000;
+        return new Date(y, +m[2] - 1, +m[1], 12).getTime();
+      }
+      m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3], 12).getTime() : 0;
+    }
+
+    function parseBrMoney(v) {
+      if (typeof v === 'number') return v;
+      let s = String(v ?? '').replace(/[^\d,.\-]/g, '');
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function triggerReceivableUpload() {
+      if (!isManager()) return showToast('Apenas administrador ou gerente pode importar contas a receber.');
+      const input = getEl('receivable-file-input');
+      input.value = '';
+      input.click();
+    }
+
+    function handleReceivableUpload(event) {
+      const file = event.target.files?.[0];
+      if (!file || !isManager()) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const grid = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+          buildReceivableImportPlan(grid, file.name);
+        } catch (err) {
+          console.error(err);
+          showToast('Não foi possível ler a planilha de contas a receber.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function receivableClientMap() {
+      const map = new Map();
+      database.cli.forEach(c => {
+        [c.nome, c.fantasia].forEach(n => {
+          const k = normName(n);
+          if (k && (!map.has(k) || (c.ativo && !map.get(k).ativo))) map.set(k, c);
+        });
+      });
+      return map;
+    }
+
+    function buildReceivableImportPlan(grid, fileName) {
+      const headIdx = grid.findIndex(r => {
+        const h = r.map(c => normName(c));
+        return h.includes('vencimento') && h.includes('conta');
+      });
+      if (headIdx < 0) return showToast('Não encontrei as colunas Vencimento e Conta na planilha.');
+      const head = grid[headIdx].map(c => normName(c));
+      const cV = head.indexOf('vencimento'), cC = head.indexOf('conta'), cCl = head.indexOf('cliente');
+      const cVal = head.indexOf('valor'), cS = head.indexOf('saldo');
+      if (cCl < 0 || cVal < 0) return showToast('A planilha precisa ter as colunas Cliente e Valor.');
+
+      const seen = new Set(database.rec.map(r => r.impKey).filter(Boolean));
+      const items = [];
+      let ignored = 0, invalid = 0;
+      for (const r of grid.slice(headIdx + 1)) {
+        const conta = String(r[cC] ?? '').trim();
+        const cliente = String(r[cCl] ?? '').trim();
+        const venc = parseBrDate(r[cV]);
+        const valor = roundMoney(parseBrMoney(r[cVal]));
+        if (!conta && !cliente && !valor) continue;
+        if (!conta || !cliente || !venc || valor <= 0) { invalid++; continue; }
+        const saldoRaw = cS >= 0 && String(r[cS]).trim() !== '' ? roundMoney(parseBrMoney(r[cS])) : valor;
+        const saldo = Math.min(valor, Math.max(0, saldoRaw));
+        const key = `${normName(conta)}|${venc}`;
+        if (seen.has(key)) { ignored++; continue; }
+        seen.add(key);
+        items.push({
+          key, conta, cliente, venc, valor, saldo,
+          ped: (conta.match(/N[º°o]\s*(\d+)/i) || [])[1] || ''
+        });
+      }
+
+      const groups = [];
+      const byPed = new Map();
+      items.forEach(it => {
+        if (!it.ped) return groups.push({ ped: '', cliente: it.cliente, items: [it] });
+        let g = byPed.get(it.ped);
+        if (!g) { g = { ped: it.ped, cliente: it.cliente, items: [] }; byPed.set(it.ped, g); groups.push(g); }
+        g.items.push(it);
+      });
+
+      if (!groups.length) {
+        return showToast(ignored ? `Nada novo para importar: ${ignored} título(s) já estavam importados.` : 'Nenhum título válido encontrado na planilha.');
+      }
+
+      const cliMap = receivableClientMap();
+      const newClients = new Map();
+      groups.forEach(g => {
+        const k = normName(g.cliente);
+        if (!cliMap.has(k) && !newClients.has(k)) newClients.set(k, g.cliente);
+      });
+
+      receivableImportPlan = {
+        fileName, groups, ignored, invalid,
+        newClients: [...newClients.values()],
+        titles: items.length,
+        valor: roundMoney(sumCollection(items, x => x.valor)),
+        saldo: roundMoney(sumCollection(items, x => x.saldo))
+      };
+      renderReceivableImportPreview();
+    }
+
+    function renderReceivableImportPreview() {
+      const plan = receivableImportPlan;
+      if (!plan) return;
+      const sample = plan.groups.flatMap(g => g.items).slice(0, 8);
+      const total = plan.titles;
+      openModal(`
+        <h3>Importar Contas a Receber</h3>
+        <p class="mut" style="margin-top:0">Arquivo: <b>${escapeHtml(plan.fileName)}</b></p>
+        <p>
+          <b>${plan.titles}</b> título(s) em <b>${plan.groups.length}</b> pedido(s) · Valor <b>${formatCurrency(plan.valor)}</b> · Saldo em aberto <b>${formatCurrency(plan.saldo)}</b>
+        </p>
+        ${plan.ignored ? `<p class="mut" style="font-size:12px">${plan.ignored} título(s) já importado(s) antes serão ignorados.</p>` : ''}
+        ${plan.invalid ? `<p class="mut" style="font-size:12px">${plan.invalid} linha(s) sem data, cliente ou valor serão ignoradas.</p>` : ''}
+        ${plan.newClients.length ? `<p style="font-size:13px"><b>${plan.newClients.length}</b> cliente(s) não encontrado(s) serão cadastrados sem CNPJ/CPF: ${escapeHtml(plan.newClients.slice(0, 6).join(', '))}${plan.newClients.length > 6 ? '…' : ''}</p>` : ''}
+        ${renderTable(['VENCIMENTO', 'CONTA', 'CLIENTE', 'VALOR', 'SALDO'], sample.map(it => [
+          formatDate(it.venc), escapeHtml(it.conta), escapeHtml(it.cliente), formatCurrency(it.valor), formatCurrency(it.saldo)
+        ]), true)}
+        ${total > sample.length ? `<p class="mut" style="font-size:12px">… e mais ${total - sample.length} título(s).</p>` : ''}
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button onclick="confirmReceivableImport()">${icon('download')} Importar ${plan.titles} título(s)</button>
+          <button class="secondary" onclick="receivableImportPlan=null;closeModal()">Cancelar</button>
+        </div>`);
+    }
+
+    function confirmReceivableImport() {
+      if (!receivableImportPlan || !isManager()) return;
+      const plan = receivableImportPlan;
+      receivableImportPlan = null;
+      const cliMap = receivableClientMap();
+      const now = Date.now();
+      let titles = 0, createdClients = 0;
+
+      plan.groups.forEach(g => {
+        const k = normName(g.cliente);
+        let client = cliMap.get(k);
+        if (!client) {
+          client = {
+            id: nextId(), codSis: '', tipo: 'J', nome: g.cliente, fantasia: '', doc: '', ie: '', email: '', tel: '',
+            cep: '', log: '', num: '', comp: '', bairro: '', cid: 'Alfenas', uf: 'MG',
+            vend: currentUser.id, vendNome: currentUser.nome, ativo: 1
+          };
+          database.cli.push(client);
+          cliMap.set(k, client);
+          createdClients++;
+        }
+
+        let inv = g.ped ? database.fat.find(f => f.imp && f.pedNum === g.ped) : null;
+        const already = inv ? database.rec.filter(r => r.fat === inv.id).length : 0;
+        const count = already + g.items.length;
+        const isNew = !inv;
+        if (isNew) {
+          inv = {
+            id: nextId(), n: g.ped ? `IMP-${g.ped}` : `IMP-${nextId().toUpperCase().slice(0, 5)}`,
+            ped: '', pedNum: g.ped, imp: true, cli: client.id, vend: client.vend || currentUser.id,
+            data: now, liq: 0, total: 0
+          };
+        }
+        g.items.slice().sort((a, b) => a.venc - b.venc).forEach((it, i) => {
+          database.rec.push({
+            id: nextId(), fat: inv.id, n: inv.n, cli: inv.cli, vend: inv.vend,
+            parc: `${already + i + 1}/${count}`, venc: it.venc, valor: it.valor,
+            pago: roundMoney(it.valor - it.saldo), impKey: it.key, ref: it.conta
+          });
+          inv.liq = roundMoney(inv.liq + it.valor);
+          inv.total = roundMoney(inv.total + it.valor);
+          titles++;
+        });
+        if (isNew) database.fat.push(inv);
+      });
+
+      addAuditLog(`Importação de contas a receber: ${titles} título(s) de ${plan.fileName}${createdClients ? `, ${createdClients} cliente(s) novo(s)` : ''}`);
+      saveData();
+      closeModal();
+      refreshView();
+      showToast(`${titles} título(s) importado(s) em Contas a Receber.`);
+    }
+
     function handleClientExcelUpload(event) {
       const file = event.target.files?.[0];
       if (!file) return;
@@ -4305,7 +4576,7 @@
             ${renderCard('Pedidos (valor total)', formatCurrency(sumCollection(orders, calculateOrderTotal)))}
             ${renderCard('Orçamentos em aberto', quotes.filter(x => STATUS_LIST.slice(0, 3).includes(x.st)).length)}
             ${renderCard('Produtos no Catálogo', database.prod.filter(isProductActive).length, 'ok')}
-            ${renderCard('Faturado', formatCurrency(sumCollection(filterByOwnership(database.fat), x => x.total)))}
+            ${renderCard('Faturado', formatCurrency(sumCollection(filterByOwnership(database.fat).filter(f => !f.imp), x => x.total)))}
             ${renderCard('Recebido', formatCurrency(sumCollection(receivables, x => x.pago)), 'ok')}
             ${renderCard('A receber', formatCurrency(sumCollection(receivables, x => x.valor - x.pago)))}
             ${renderCard('Pedidos aguardando faturamento', pendingOrders.length)}
@@ -4555,6 +4826,15 @@
         const vencido = sumCollection(open.filter(x => x.fin.proxVenc && x.fin.proxVenc < now), x => x.fin.saldo);
 
         return renderHeader('FINANCEIRO', 'CONTAS A RECEBER', '') + `
+          ${isManager() ? `<div class="sheet-bar">
+            <div class="sheet-bar-info">
+              <strong>${icon('sheet')} Importar Contas a Receber (planilha)</strong>
+              <small>Lê <b>Vencimento</b>, <b>Conta</b> (Pedido Nº, forma e código), <b>Cliente</b>, <b>Valor</b> e <b>Saldo</b>. Títulos já importados são ignorados.</small>
+            </div>
+            <div class="sheet-bar-actions">
+              <button onclick="triggerReceivableUpload()">${icon('download')} Importar Planilha (.xls / .xlsx / .csv)</button>
+            </div>
+          </div>` : ''}
           <div class="cards">
             ${renderCard('Total a receber', formatCurrency(totalAberto))}
             ${renderCard('Pedidos não pagos', open.length)}
@@ -4566,9 +4846,9 @@
               const ped = database.ped.find(p => p.id === inv.ped);
               const late = fin.proxVenc && fin.proxVenc < now;
               return [
-                `<span class="num-serif">#${escapeHtml(ped ? ped.n : '—')}</span><span class="sub-status">FATURA ${escapeHtml(inv.n)}</span>`,
+                `<span class="num-serif">#${escapeHtml(ped ? ped.n : (inv.pedNum || '—'))}</span><span class="sub-status">${inv.imp ? 'IMPORTADO' : `FATURA ${escapeHtml(inv.n)}`}</span>`,
                 `<b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br><small class="mut">Vendedor: <b>${escapeHtml(String(ped ? getSellerDisplayName(ped) : getEntityName('users', inv.vend)))}</b></small>`,
-                formatDate(inv.data),
+                inv.imp ? '<span class="mut">Importado</span>' : formatDate(inv.data),
                 fin.proxVenc ? formatDate(fin.proxVenc) + (late ? '<br><span class="dot-bad">ATRASADO</span>' : '') : '—',
                 formatCurrency(fin.valor),
                 formatCurrency(fin.pago),
@@ -4582,7 +4862,7 @@
       fat() {
         return renderHeader('FISCAL E COMERCIAL', 'FATURAMENTO', '') +
           renderTable(['FATURA', 'EMISSÃO', 'PEDIDO ORIGEM', 'CLIENTE', 'LÍQUIDO ITENS', 'VALOR TOTAL', 'ENTREGA', 'PAGAMENTO', 'AÇÕES'],
-            filterByOwnership(database.fat).slice().reverse().map(f => [
+            filterByOwnership(database.fat).filter(f => !f.imp).slice().reverse().map(f => [
               `<span class="num-serif">${f.n}</span><span class="sub-status">FATURADO</span>`,
               formatDate(f.data),
               `#${escapeHtml((database.ped.find(p => p.id === f.ped) || {}).n)}`,
@@ -4610,7 +4890,7 @@
           return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         };
 
-        const allInvoices = filterByOwnership(database.fat);
+        const allInvoices = filterByOwnership(database.fat).filter(f => !f.imp);
         const invoicedOrdersWithoutFat = filterByOwnership(database.ped).filter(p =>
           p.st === 'Faturado' && !database.fat.some(f => f.ped === p.id)
         );
@@ -4823,7 +5103,7 @@
           <div class="card form-layout" style="margin-bottom:18px">
             <h3 class="panel-title">Fatura ${escapeHtml(inv.n)}</h3>
             <p style="margin:0 0 12px">
-              Pedido <b>#${escapeHtml(ped ? ped.n : '—')}</b> · Cliente <b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br>
+              Pedido <b>#${escapeHtml(ped ? ped.n : (inv.pedNum || '—'))}</b> · Cliente <b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br>
               <small class="mut">Vendedor: <b>${escapeHtml(String(ped ? getSellerDisplayName(ped) : getEntityName('users', inv.vend)))}</b>${ped ? ` · Combinado no pedido: <b>${escapeHtml(ped.formaPag || '—')} (${ped.parc || 1}x)</b>` : ''}</small>
             </p>
             ${renderTable(['PARCELA', 'VENCIMENTO', 'VALOR', 'RECEBIDO', 'SALDO'], fin.parcelas.map(r => {
@@ -6065,7 +6345,7 @@
     }
 
     function getBilledRecords() {
-      const fromInvoices = filterByOwnership(database.fat).map(f => {
+      const fromInvoices = filterByOwnership(database.fat).filter(f => !f.imp).map(f => {
         const ped = database.ped.find(p => p.id === f.ped);
         return {
           inv: f,
@@ -6148,6 +6428,7 @@
     }
 
     function deliveryBadge(inv) {
+      if (inv.imp) return '<span class="mut">—</span>';
       return inv.ent
         ? `<span class="dot-ok">ENTREGUE</span><br><small class="mut">${formatDate(inv.ent)}</small>`
         : '<span class="dot-warn">A ENTREGAR</span>';
@@ -6177,7 +6458,7 @@
       const ro = `'${reopenOrderId}'`;
       const fin = invoiceFinance(inv);
       const small = 'padding:5px 10px;font-size:12px';
-      const delivery = inv.ent
+      const delivery = inv.imp ? '' : inv.ent
         ? `<button class="secondary" style="${small}" onclick="undoInvoiceDelivery('${inv.id}', ${ro})">Desfazer entrega</button>`
         : `<button style="${small}" onclick="confirmInvoiceDelivery('${inv.id}', ${ro})">${icon('save')} Confirmar entrega</button>`;
       let payment = '';
