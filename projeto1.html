@@ -3028,10 +3028,10 @@
       ['prod', 'Catálogo', icon('box'), false, 'Vendas'],
       ['receber', 'Contas a Receber', icon('dollar'), false, 'Financeiro'],
       ['fat', 'Notas / Faturas', icon('file'), false, 'Financeiro'],
-      ['rec', 'Parcelas e Baixas', icon('sheet'), false, 'Financeiro'],
-      ['com', 'Comissões', icon('chart'), false, 'Financeiro'],
-      ['vendas', 'Relatório de Vendas', icon('chart'), false, 'Relatórios'],
-      ['ganhos', 'Ganhos no Mês', icon('chart'), false, 'Relatórios'],
+      ['rec', 'Parcelas e Baixas', icon('sheet'), true, 'Financeiro'],
+      ['com', 'Comissões', icon('chart'), true, 'Financeiro'],
+      ['vendas', 'Relatório de Vendas', icon('chart'), true, 'Relatórios'],
+      ['ganhos', 'Ganhos no Mês', icon('chart'), true, 'Relatórios'],
       ['usr', 'Usuários', icon('user'), true, 'Sistema'],
       ['cfg', 'Ajustes', icon('sliders'), true, 'Sistema']
     ];
@@ -3389,6 +3389,8 @@
     }
 
     function refreshView() {
+      const restricted = APP_NAVIGATION.find(item => item[0] === activePage);
+      if (currentUser && restricted?.[3] && !isAdmin()) activePage = 'home';
       syncHistoryState();
       const navKey = activePage === 'pagar' ? (paymentDraft?.returnPage || 'receber') : activePage;
       document.querySelectorAll('nav a').forEach(a => {
