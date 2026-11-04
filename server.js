@@ -103,11 +103,15 @@ app.post('/api/db', (req, res) => {
     return res.status(400).json({ ok: false, erro: 'Dados inválidos.' });
   }
 
+  // O botão "Excluir todos os logins" do sistema envia este cabeçalho para confirmar
+  // que apagar todos os usuários é intencional.
+  const apagarLoginsConfirmado = req.get('X-Confirm-Wipe-Users') === 'sim';
+
   fila = fila.then(async () => {
     await ready;
-    // Proteção: nunca trocar uma base com usuários por uma vazia
+    // Proteção: nunca trocar uma base com usuários por uma vazia (a menos que seja confirmado)
     const atual = await get(`SELECT data FROM store WHERE id = 1`);
-    if (atual && d.users.length === 0) {
+    if (atual && d.users.length === 0 && !apagarLoginsConfirmado) {
       try {
         const antigo = JSON.parse(atual.data);
         if (Array.isArray(antigo.users) && antigo.users.length > 0) {
