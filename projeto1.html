@@ -2050,7 +2050,12 @@
       .action-panel { display: flex; }
       .tool-grid { display: none; }
     }
-    </style>
+  
+    /* tabela que cabe na tela (Contas a Receber) */
+    .tw-compact th { padding: 12px 10px; }
+    .tw-compact td { padding: 12px 10px; white-space: normal; }
+    .tw-compact td button { white-space: nowrap; }
+  </style>
 </head>
 <body>
   <div id="app"></div>
@@ -3150,6 +3155,49 @@
       showToast('Foto de perfil removida.');
     }
 
+    let historyApplying = false;
+
+    function syncHistoryState() {
+      if (!currentUser || historyApplying) return;
+      try {
+        const st = history.state;
+        if (st && st.ml && st.page === activePage) return;
+        const next = { ml: true, page: activePage };
+        const url = '#' + activePage;
+        if (st && st.ml) history.pushState(next, '', url);
+        else history.replaceState(next, '', url);
+      } catch (e) {}
+    }
+
+    window.addEventListener('popstate', e => {
+      if (!currentUser) return;
+      const visible = id => { const el = getEl(id); return !!el && getComputedStyle(el).display !== 'none'; };
+      const printOpen = visible('print-overlay');
+      const modalOpen = visible('modal-container');
+      if (printOpen || modalOpen) {
+        if (printOpen) closePrintPreview();
+        if (modalOpen) closeModal();
+        try { history.pushState({ ml: true, page: activePage }, '', '#' + activePage); } catch (err) {}
+        return;
+      }
+      let page = e.state && e.state.ml ? e.state.page : null;
+      if (!page) return;
+      if (page === 'pagar' && !paymentDraft) page = 'receber';
+      const navItem = APP_NAVIGATION.find(item => item[0] === page);
+      if (!PAGES[page] || (navItem?.[3] && !isAdmin())) page = 'home';
+      activePage = page;
+      if (page !== 'pagar') paymentDraft = null;
+      searchQuery = '';
+      cliStatusFilter = 'ALL';
+      cliLimit = CLI_PAGE;
+      historyApplying = true;
+      try { history.replaceState({ ml: true, page }, '', '#' + page); } catch (err) {}
+      historyApplying = false;
+      saveSession();
+      refreshView();
+      window.scrollTo({ top: 0 });
+    });
+
     function navigateTo(pageKey) {
       activePage = pageKey;
       if (pageKey !== 'pagar') paymentDraft = null;
@@ -3341,6 +3389,7 @@
     }
 
     function refreshView() {
+      syncHistoryState();
       const navKey = activePage === 'pagar' ? (paymentDraft?.returnPage || 'receber') : activePage;
       document.querySelectorAll('nav a').forEach(a => {
         a.classList.toggle('on', a.id === `nav_${navKey}`);
@@ -4363,7 +4412,7 @@
       const cVal = head.indexOf('valor'), cS = head.indexOf('saldo');
       if (cCl < 0 || cVal < 0) return showToast('A planilha precisa ter as colunas Cliente e Valor.');
 
-      const seen = new Set(database.rec.map(r => r.impKey).filter(Boolean));
+      const seen = new Set();
       const items = [];
       let ignored = 0, invalid = 0;
       for (const r of grid.slice(headIdx + 1)) {
@@ -4393,9 +4442,16 @@
         g.items.push(it);
       });
 
-      if (!groups.length) {
-        return showToast(ignored ? `Nada novo para importar: ${ignored} título(s) já estavam importados.` : 'Nenhum título válido encontrado na planilha.');
-      }
+      groups.forEach(g => {
+        const count = g.items.length;
+        g.items.sort((a, b) => a.venc - b.venc).forEach((it, i) => {
+          it.k = i + 1;
+          it.count = count;
+          it.parc = `${it.k}/${count}`;
+        });
+      });
+
+      if (!groups.length) return showToast('Nenhum título válido encontrado na planilha.');
 
       const cliMap = receivableClientMap();
       const newClients = new Map();
@@ -4404,8 +4460,14 @@
         if (!cliMap.has(k) && !newClients.has(k)) newClients.set(k, g.cliente);
       });
 
+      const prevInvoices = database.fat.filter(f => f.imp);
+      const replacing = {
+        count: database.rec.filter(r => r.impKey).length,
+        lancado: roundMoney(sumCollection(prevInvoices, f => sumCollection(Array.isArray(f.pagtos) ? f.pagtos : [], x => Number(x.total) || 0)))
+      };
+
       receivableImportPlan = {
-        fileName, groups, ignored, invalid,
+        fileName, groups, ignored, invalid, replacing,
         newClients: [...newClients.values()],
         titles: items.length,
         valor: roundMoney(sumCollection(items, x => x.valor)),
@@ -4425,15 +4487,15 @@
         <p>
           <b>${plan.titles}</b> título(s) em <b>${plan.groups.length}</b> pedido(s) · Valor <b>${formatCurrency(plan.valor)}</b> · Saldo em aberto <b>${formatCurrency(plan.saldo)}</b>
         </p>
-        ${plan.ignored ? `<p class="mut" style="font-size:12px">${plan.ignored} título(s) já importado(s) antes serão ignorados.</p>` : ''}
+        ${plan.replacing.count ? `<p style="font-size:13px;background:#fff6e0;border:1px solid #f0d58a;border-radius:8px;padding:9px 12px">Esta planilha <b>substitui</b> as <b>${plan.replacing.count}</b> parcela(s) importadas anteriormente.${plan.replacing.lancado > 0 ? ` Os <b>${formatCurrency(plan.replacing.lancado)}</b> em recebimentos lançados no sistema nelas serão perdidos.` : ''} Contas geradas por pedidos do sistema não são alteradas.</p>` : ''}
         ${plan.invalid ? `<p class="mut" style="font-size:12px">${plan.invalid} linha(s) sem data, cliente ou valor serão ignoradas.</p>` : ''}
         ${plan.newClients.length ? `<p style="font-size:13px"><b>${plan.newClients.length}</b> cliente(s) não encontrado(s) serão cadastrados sem CNPJ/CPF: ${escapeHtml(plan.newClients.slice(0, 6).join(', '))}${plan.newClients.length > 6 ? '…' : ''}</p>` : ''}
-        ${renderTable(['VENCIMENTO', 'CONTA', 'CLIENTE', 'VALOR', 'SALDO'], sample.map(it => [
-          formatDate(it.venc), escapeHtml(it.conta), escapeHtml(it.cliente), formatCurrency(it.valor), formatCurrency(it.saldo)
+        ${renderTable(['CLIENTE', 'PEDIDO', 'PARCELA', 'VENCIMENTO', 'VALOR', 'SALDO'], sample.map(it => [
+          escapeHtml(it.cliente), it.ped ? `#${escapeHtml(it.ped)}` : '—', it.parc, formatDate(it.venc), formatCurrency(it.valor), formatCurrency(it.saldo)
         ]), true)}
         ${total > sample.length ? `<p class="mut" style="font-size:12px">… e mais ${total - sample.length} título(s).</p>` : ''}
         <div style="display:flex;gap:8px;margin-top:14px">
-          <button onclick="confirmReceivableImport()">${icon('download')} Importar ${plan.titles} título(s)</button>
+          <button onclick="confirmReceivableImport()">${icon('download')} ${plan.replacing.count ? 'Substituir e importar' : 'Importar'} ${plan.titles} parcela(s)</button>
           <button class="secondary" onclick="receivableImportPlan=null;closeModal()">Cancelar</button>
         </div>`);
     }
@@ -4442,6 +4504,9 @@
       if (!receivableImportPlan || !isManager()) return;
       const plan = receivableImportPlan;
       receivableImportPlan = null;
+      const sc = importedReceivablesScope();
+      database.rec = database.rec.filter(r => !r.impKey);
+      database.fat = database.fat.filter(f => !(f.imp && sc.fatIds.has(f.id)));
       const cliMap = receivableClientMap();
       const now = Date.now();
       let titles = 0, createdClients = 0;
@@ -4460,35 +4525,79 @@
           createdClients++;
         }
 
-        let inv = g.ped ? database.fat.find(f => f.imp && f.pedNum === g.ped) : null;
-        const already = inv ? database.rec.filter(r => r.fat === inv.id).length : 0;
-        const count = already + g.items.length;
-        const isNew = !inv;
-        if (isNew) {
-          inv = {
-            id: nextId(), n: g.ped ? `IMP-${g.ped}` : `IMP-${nextId().toUpperCase().slice(0, 5)}`,
-            ped: '', pedNum: g.ped, imp: true, cli: client.id, vend: client.vend || currentUser.id,
-            data: now, liq: 0, total: 0
+        g.items.forEach(it => {
+          const inv = {
+            id: nextId(),
+            n: g.ped ? (it.count > 1 ? `IMP-${g.ped}-${it.k}` : `IMP-${g.ped}`) : `IMP-${nextId().toUpperCase().slice(0, 5)}`,
+            ped: '', pedNum: g.ped, parcela: it.parc, imp: true,
+            cli: client.id, vend: client.vend || currentUser.id,
+            data: now, liq: it.valor, total: it.valor
           };
-        }
-        g.items.slice().sort((a, b) => a.venc - b.venc).forEach((it, i) => {
+          database.fat.push(inv);
           database.rec.push({
             id: nextId(), fat: inv.id, n: inv.n, cli: inv.cli, vend: inv.vend,
-            parc: `${already + i + 1}/${count}`, venc: it.venc, valor: it.valor,
+            parc: it.parc, venc: it.venc, valor: it.valor,
             pago: roundMoney(it.valor - it.saldo), impKey: it.key, ref: it.conta
           });
-          inv.liq = roundMoney(inv.liq + it.valor);
-          inv.total = roundMoney(inv.total + it.valor);
           titles++;
         });
-        if (isNew) database.fat.push(inv);
       });
 
-      addAuditLog(`Importação de contas a receber: ${titles} título(s) de ${plan.fileName}${createdClients ? `, ${createdClients} cliente(s) novo(s)` : ''}`);
+      addAuditLog(`Importação de contas a receber: ${titles} parcela(s) de ${plan.fileName}${plan.replacing.count ? `, substituindo ${plan.replacing.count} anteriores` : ''}${createdClients ? `, ${createdClients} cliente(s) novo(s)` : ''}`);
       saveData();
       closeModal();
       refreshView();
-      showToast(`${titles} título(s) importado(s) em Contas a Receber.`);
+      showToast(`${titles} parcela(s) importada(s)${plan.replacing.count ? ' (substituiu a importação anterior)' : ''}.`);
+    }
+
+    function importedReceivablesScope() {
+      const recs = database.rec.filter(r => r.impKey);
+      const fatIds = new Set([...recs.map(r => r.fat), ...database.fat.filter(f => f.imp).map(f => f.id)]);
+      return {
+        recs,
+        fatIds,
+        valor: roundMoney(sumCollection(recs, r => r.valor)),
+        pago: roundMoney(sumCollection(recs, r => r.pago)),
+        others: database.fat.filter(f => !fatIds.has(f.id) && invoiceFinance(f).parcelas.length > 0).length
+      };
+    }
+
+    function confirmClearReceivables() {
+      if (!isManager()) return;
+      const sc = importedReceivablesScope();
+      if (!sc.recs.length) return showToast('Não há contas a receber importadas para excluir.');
+      openModal(`
+        <h3>Excluir todas as contas a receber</h3>
+        <p style="font-size:14px;line-height:1.6">
+          Isso vai excluir <b>${sc.recs.length} parcela(s)</b> importadas da planilha, somando <b>${formatCurrency(sc.valor)}</b>.
+        </p>
+        ${sc.pago > 0 ? `<p style="font-size:13px;color:#8f1122"><b>Atenção:</b> ${formatCurrency(sc.pago)} já recebidos nessas parcelas também serão apagados.</p>` : ''}
+        <p class="mut" style="font-size:12.5px;line-height:1.55">
+          Os clientes cadastrados na importação não são excluídos.${sc.others ? ` As ${sc.others} fatura(s) geradas por pedidos do sistema não serão afetadas.` : ''} Esta ação não pode ser desfeita.
+        </p>
+        <label style="font-size:12.5px;font-weight:600;margin-top:10px;display:block">Digite <b>EXCLUIR</b> para confirmar</label>
+        <input id="clear_rec_confirm" autocomplete="off" placeholder="EXCLUIR" oninput="getEl('clear_rec_btn').disabled = this.value.trim().toUpperCase() !== 'EXCLUIR'">
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button id="clear_rec_btn" disabled onclick="clearReceivables()">${icon('trash')} Excluir ${sc.recs.length} parcela(s)</button>
+          <button class="secondary" onclick="closeModal()">Cancelar</button>
+        </div>
+      `);
+      setTimeout(() => { const el = getEl('clear_rec_confirm'); if (el) el.focus(); }, 60);
+    }
+
+    async function clearReceivables() {
+      if (!isManager()) return;
+      if (getVal('clear_rec_confirm').trim().toUpperCase() !== 'EXCLUIR') return showToast('Digite EXCLUIR para confirmar.');
+      const sc = importedReceivablesScope();
+      const count = sc.recs.length;
+      database.rec = database.rec.filter(r => !r.impKey);
+      database.fat = database.fat.filter(f => !(f.imp && sc.fatIds.has(f.id)));
+      database.com = database.com.filter(c => !sc.fatIds.has(c.fat));
+      addAuditLog(`Contas a receber importadas excluídas (${count} parcelas)`);
+      await saveData();
+      closeModal();
+      refreshView();
+      showToast(`${count} parcela(s) de contas a receber excluídas.`);
     }
 
     function handleClientExcelUpload(event) {
@@ -4828,10 +4937,11 @@
           ${isManager() ? `<div class="sheet-bar">
             <div class="sheet-bar-info">
               <strong>${icon('sheet')} Importar Contas a Receber (planilha)</strong>
-              <small>Lê <b>Vencimento</b>, <b>Conta</b> (Pedido Nº, forma e código), <b>Cliente</b>, <b>Valor</b> e <b>Saldo</b>. Títulos já importados são ignorados.</small>
+              <small>Lê <b>Vencimento</b>, <b>Conta</b> (Pedido Nº, forma e código), <b>Cliente</b>, <b>Valor</b> e <b>Saldo</b>. Cada parcela do cliente vira uma linha. Importar de novo <b>substitui</b> o que foi importado antes.</small>
             </div>
             <div class="sheet-bar-actions">
               <button onclick="triggerReceivableUpload()">${icon('download')} Importar Planilha (.xls / .xlsx / .csv)</button>
+              ${database.rec.some(r => r.impKey) ? `<button class="danger-outline" onclick="confirmClearReceivables()">${icon('trash')} Excluir todas as contas a receber</button>` : ''}
             </div>
           </div>` : ''}
           <div class="cards">
@@ -4840,22 +4950,24 @@
             ${renderCard('Com parcela vencida', open.filter(x => x.fin.proxVenc && x.fin.proxVenc < now).length, 'bad')}
             ${renderCard('Valor vencido', formatCurrency(vencido), 'bad')}
           </div>` +
-          renderTable(['PEDIDO / FATURA', 'CLIENTE / VENDEDOR', 'FATURADO EM', 'PRÓX. VENCIMENTO', 'TOTAL', 'RECEBIDO', 'SALDO', 'ENTREGA', 'AÇÕES'],
+          renderTable(['PEDIDO / PARCELA', 'CLIENTE / VENDEDOR', 'VENCIMENTO', 'TOTAL', 'RECEBIDO', 'SALDO', 'AÇÕES'],
             open.map(({ inv, fin }) => {
               const ped = database.ped.find(p => p.id === inv.ped);
               const late = fin.proxVenc && fin.proxVenc < now;
+              const money = v => `<span style="white-space:nowrap">${formatCurrency(v)}</span>`;
+              const sub = inv.imp
+                ? (fin.parcelas.length === 1 ? `PARCELA ${escapeHtml(fin.parcelas[0].parc || '1/1')}` : `${fin.parcelas.length} PARCELAS`)
+                : `FATURA ${escapeHtml(inv.n)}`;
               return [
-                `<span class="num-serif">#${escapeHtml(ped ? ped.n : (inv.pedNum || '—'))}</span><span class="sub-status">${inv.imp ? 'IMPORTADO' : `FATURA ${escapeHtml(inv.n)}`}</span>`,
+                `<span class="num-serif">#${escapeHtml(ped ? ped.n : (inv.pedNum || '—'))}</span><span class="sub-status">${sub}</span>${inv.imp ? '' : `<small class="mut" style="display:block">Faturado em ${formatDate(inv.data)}</small>${deliveryBadge(inv)}`}`,
                 `<b>${getEntityName('cli', inv.cli).toUpperCase()}</b><br><small class="mut">Vendedor: <b>${escapeHtml(String(ped ? getSellerDisplayName(ped) : getEntityName('users', inv.vend)))}</b></small>`,
-                inv.imp ? '<span class="mut">Importado</span>' : formatDate(inv.data),
-                fin.proxVenc ? formatDate(fin.proxVenc) + (late ? '<br><span class="dot-bad">ATRASADO</span>' : '') : '—',
-                formatCurrency(fin.valor),
-                formatCurrency(fin.pago),
-                `<b style="font-family:var(--font-serif);font-size:16px">${formatCurrency(fin.saldo)}</b>`,
-                deliveryBadge(inv),
+                fin.proxVenc ? `<span style="white-space:nowrap">${formatDate(fin.proxVenc)}</span>` + (late ? '<br><span class="dot-bad">ATRASADO</span>' : '') : '—',
+                money(fin.valor),
+                money(fin.pago),
+                `<b style="font-family:var(--font-serif);font-size:16px;white-space:nowrap">${formatCurrency(fin.saldo)}</b>`,
                 invoiceActionsHtml(inv)
               ];
-            }));
+            })).replace('class="table-wrapper"', 'class="table-wrapper tw-compact"');
       },
 
       fat() {
