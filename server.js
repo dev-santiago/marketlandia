@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 // senão o banco é apagado a cada deploy/reinício.
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'erp.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+if (!process.env.DB_PATH) console.warn('AVISO: DB_PATH não definido. O banco fica em disco temporário e é APAGADO a cada reinício/deploy no Render.');
 
 const app = express();
 const db = new sqlite3.Database(DB_PATH);
@@ -109,23 +110,29 @@ app.post('/api/db', (req, res) => {
 
   fila = fila.then(async () => {
     await ready;
-    // Proteção: nunca trocar uma base com usuários por uma vazia (a menos que seja confirmado)
     const atual = await get(`SELECT data FROM store WHERE id = 1`);
-    if (atual && d.users.length === 0 && !apagarLoginsConfirmado) {
-      try {
-        const antigo = JSON.parse(atual.data);
-        if (Array.isArray(antigo.users) && antigo.users.length > 0) {
-          return res.status(409).json({ ok: false, erro: 'Gravação recusada: base sem usuários sobrescreveria dados existentes.' });
-        }
-      } catch (e) { /* JSON antigo corrompido: deixa sobrescrever */ }
+    let antigo = null;
+    if (atual) { try { antigo = JSON.parse(atual.data); } catch (e) { /* JSON corrompido: deixa sobrescrever */ } }
+    const revAtual = antigo && Number.isInteger(antigo._rev) ? antigo._rev : 0;
+
+    if (antigo && Array.isArray(antigo.users) && antigo.users.length > 0) {
+      // nunca trocar uma base com usuários por uma vazia (a menos que seja confirmado)
+      if (d.users.length === 0 && !apagarLoginsConfirmado) {
+        return res.status(409).json({ ok: false, erro: 'Gravação recusada: base sem usuários sobrescreveria dados existentes.' });
+      }
+      // quem grava precisa ter partido da versão atual; cópia velha de outra aba/aparelho não sobrescreve mais
+      if (d._rev !== revAtual && !apagarLoginsConfirmado) {
+        return res.status(409).json({ ok: false, conflito: true, rev: revAtual, erro: 'Dados desatualizados: outra pessoa gravou antes.' });
+      }
     }
+    d._rev = revAtual + 1;
 
     await run('BEGIN');
     try {
       await run(`INSERT OR REPLACE INTO store (id, data) VALUES (1, ?)`, [JSON.stringify(d)]);
       await writeMirror(d);
       await run('COMMIT');
-      res.json({ ok: true });
+      res.json({ ok: true, rev: d._rev });
     } catch (err) {
       await run('ROLLBACK').catch(() => {});
       throw err;

@@ -2857,7 +2857,7 @@
       email: r[6], tel: r[7], log: r[8], num: r[9], bairro: r[10], cid: r[11], uf: r[12], cep: r[13], ativo: 1
     }));
 
-    const saveData = async () => {
+    const persistData = async () => {
       try {
         localStorage.setItem('marketlandia_db', JSON.stringify(database));
       } catch (e) {}
@@ -2867,14 +2867,32 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(database)
         });
-        if (!r.ok) {
+        if (r.ok) {
+          const j = await r.json().catch(() => null);
+          if (j && Number.isInteger(j.rev)) {
+            database._rev = j.rev;
+            try { localStorage.setItem('marketlandia_db', JSON.stringify(database)); } catch (e) {}
+          }
+        } else if (r.status === 409) {
+          showToast('Outra pessoa alterou os dados antes de você. Recarregando a versão mais recente; refaça a última alteração.');
+          try {
+            const t = Number(sessionStorage.getItem('ml_409') || 0);
+            if (Date.now() - t > 10000) {
+              sessionStorage.setItem('ml_409', String(Date.now()));
+              setTimeout(() => location.reload(), 2500);
+            }
+          } catch (e) {}
+        } else {
           console.warn('O servidor recusou a gravação (' + r.status + '). Dados mantidos só no navegador.');
-          if (typeof showToast === 'function') showToast('Atenção: não foi possível gravar no servidor.');
+          showToast('Atenção: não foi possível gravar no servidor.');
         }
       } catch (e) {
-        console.warn('Servidor Render inacessível no momento, salvo localmente.');
+        console.warn('Servidor inacessível no momento, salvo localmente.');
       }
     };
+
+    let saveChain = Promise.resolve();
+    const saveData = () => (saveChain = saveChain.then(persistData));
 
     const nextId = () => Math.random().toString(36).slice(2, 10);
     const nextSeqNumber = key => String(++database.seq[key]).padStart(4, '0');
@@ -7861,17 +7879,20 @@
         }
       } catch (e) {}
 
-      if (!database || !Array.isArray(database.users)) {
+      {
+        let local = null;
         try {
-          const local = localStorage.getItem('marketlandia_db');
-          if (local) {
-            const parsed = JSON.parse(local);
-            if (parsed && Array.isArray(parsed.users)) {
-              database = parsed;
-              syncLocalToServer = true;
-            }
-          }
+          const raw = localStorage.getItem('marketlandia_db');
+          const parsed = raw ? JSON.parse(raw) : null;
+          if (parsed && Array.isArray(parsed.users)) local = parsed;
         } catch (err) {}
+        const semServidor = !database || !Array.isArray(database.users);
+        const servidorSemLogins = !semServidor && database.users.length === 0;
+        const localMaisNovo = local && (!Number.isInteger(local._rev) || local._rev > ((database && database._rev) || 0));
+        if (local && (semServidor || (servidorSemLogins && local.users.length > 0 && localMaisNovo))) {
+          database = local;
+          syncLocalToServer = true;
+        }
       }
 
       if (!database || !Array.isArray(database.users)) {
